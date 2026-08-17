@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Traqueur d'Exposition — Module 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Stockage partagé (remplace window.storage de Claude.ai pour un hébergement statique) -->
+<script>window.LAB_ID = "module1-traqueur-exposition";</script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="../assets/firebase-config.js"></script>
+<script src="../assets/lab-storage.js"></script>
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3;
+    --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--sans); background:var(--paper); color:var(--ink);
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  button{font-family:inherit; cursor:pointer; border:none;}
+  .app{min-height:100vh; display:flex; flex-direction:column;}
+
+  /* ---------- Utility ---------- */
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gold); font-weight:600;
+  }
+  .center-wrap{flex:1; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .hidden{display:none !important;}
+  .fade-in{animation:fadeIn .5s ease both;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  @media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important;} }
+
+  /* ---------- LANDING ---------- */
+  #view-landing{
+    min-height:100vh; display:grid; grid-template-columns:1.1fr 1fr;
+  }
+  @media (max-width:820px){ #view-landing{grid-template-columns:1fr;} }
+  .landing-hero{
+    background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
+    color:#fff; padding:56px 48px; display:flex; flex-direction:column; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .landing-hero::after{
+    content:""; position:absolute; right:-80px; bottom:-80px; width:340px; height:340px;
+    border-radius:50%; border:1.5px solid rgba(201,162,75,.28);
+  }
+  .landing-hero::before{
+    content:""; position:absolute; right:20px; top:-60px; width:220px; height:220px;
+    border-radius:50%; border:1.5px solid rgba(202,220,252,.14);
+  }
+  .badge-icon{
+    width:64px; height:78px; border-radius:10px; background:linear-gradient(155deg,var(--gold),#a9843a);
+    position:relative; margin-bottom:28px; box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .badge-icon::before{
+    content:""; position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width:22px; height:22px; border-radius:50%; background:var(--navy-dark);
+  }
+  .badge-icon::after{
+    content:""; position:absolute; top:38px; left:14px; right:14px; height:26px;
+    border-radius:4px; background:rgba(18,23,63,.35);
+  }
+  .landing-hero h1{
+    font-family:var(--serif); font-weight:600; font-size:clamp(34px,4.4vw,52px); line-height:1.04;
+    letter-spacing:-.01em; max-width:9.5em; margin:14px 0 18px;
+  }
+  .landing-hero p{color:var(--ice); font-size:16.5px; line-height:1.6; max-width:34em;}
+  .landing-hero .module-tag{
+    margin-top:34px; font-family:var(--mono); font-size:12px; color:rgba(255,255,255,.55);
+    letter-spacing:.06em;
+  }
+  .landing-panel{
+    background:var(--paper); padding:56px 48px; display:flex; flex-direction:column; justify-content:center; gap:18px;
+  }
+  .role-card{
+    display:flex; align-items:center; gap:18px; text-align:left; width:100%;
+    background:#fff; border:1.5px solid #E4E0D5; border-radius:var(--radius); padding:22px 22px;
+    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .role-card:hover{border-color:var(--gold); transform:translateY(-2px); box-shadow:0 10px 24px rgba(30,39,97,.08);}
+  .role-card:focus-visible{outline:3px solid var(--navy); outline-offset:2px;}
+  .role-glyph{
+    flex:none; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-size:20px; font-weight:600; color:#fff;
+  }
+  .role-card.participant .role-glyph{background:var(--navy);}
+  .role-card.formateur .role-glyph{background:var(--gold); color:var(--navy-dark);}
+  .role-title{font-family:var(--serif); font-weight:600; font-size:19px; color:var(--navy);}
+  .role-sub{font-size:13.5px; color:var(--gray); margin-top:3px; line-height:1.4;}
+  .landing-note{font-size:12.5px; color:var(--gray); margin-top:6px; line-height:1.5;}
+
+  /* ---------- SHARED HEADER ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 24px;
+    border-bottom:1px solid #E4E0D5; background:#fff;
+  }
+  .topbar .brand{display:flex; align-items:center; gap:10px;}
+  .topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--gold);}
+  .topbar .brand span{font-family:var(--mono); font-size:11.5px; letter-spacing:.08em; color:var(--navy); text-transform:uppercase; font-weight:600;}
+  .link-back{font-family:var(--mono); font-size:11.5px; color:var(--gray); letter-spacing:.04em; background:none;}
+  .link-back:hover{color:var(--navy);}
+
+  /* ---------- PARTICIPANT: PSEUDO ---------- */
+  .card-shell{
+    width:100%; max-width:460px; background:#fff; border:1.5px solid #E4E0D5; border-radius:20px;
+    padding:38px 34px; box-shadow:0 18px 40px rgba(30,39,97,.07);
+  }
+  .card-shell h2{font-family:var(--serif); font-size:26px; font-weight:600; color:var(--navy); margin:10px 0 8px;}
+  .card-shell p.desc{color:var(--gray); font-size:14.5px; line-height:1.55; margin-bottom:24px;}
+  input[type=text]{
+    width:100%; padding:14px 16px; border-radius:10px; border:1.5px solid #DCD7C8; font-size:16px;
+    font-family:var(--sans); background:var(--paper); color:var(--ink);
+  }
+  input[type=text]:focus{outline:none; border-color:var(--navy);}
+  .btn-primary{
+    margin-top:18px; width:100%; padding:15px 18px; border-radius:10px; background:var(--navy); color:#fff;
+    font-weight:600; font-size:15px; letter-spacing:.01em; transition:background .15s ease;
+  }
+  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-primary:disabled{background:#B9BBCB; cursor:not-allowed;}
+  .mode-btn.active{background:var(--navy) !important; color:#fff !important; border-color:var(--navy) !important;}
+  .privacy-note{
+    margin-top:20px; display:flex; gap:10px; font-size:12.5px; color:var(--gray); line-height:1.55;
+    background:var(--paper); border-radius:10px; padding:12px 14px; border:1px dashed #D8D2C0;
+  }
+
+  /* ---------- PARTICIPANT: GAME ---------- */
+  #view-game{min-height:100vh; display:flex; flex-direction:column;}
+  .progress-row{padding:18px 24px 0; max-width:560px; margin:0 auto; width:100%;}
+  .progress-track{height:5px; background:#E4E0D5; border-radius:6px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--gold),var(--navy)); border-radius:6px; transition:width .35s ease;}
+  .progress-label{font-family:var(--mono); font-size:11px; color:var(--gray); margin-top:8px; letter-spacing:.05em;}
+
+  .game-stage{flex:1; display:flex; align-items:center; justify-content:center; padding:20px 24px 40px;}
+  .badge-card{
+    width:100%; max-width:400px; background:linear-gradient(160deg,var(--navy),var(--navy-dark));
+    border-radius:22px; padding:0; color:#fff; box-shadow:0 26px 60px rgba(18,23,63,.35);
+    position:relative; overflow:hidden;
+  }
+  .badge-card .hole{
+    width:34px; height:8px; background:rgba(0,0,0,.28); border-radius:6px; margin:18px auto 6px;
+  }
+  .badge-card .cat-tag{
+    text-align:center; font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--gold-light); margin-top:6px;
+  }
+  .badge-card .type-label{
+    font-family:var(--serif); font-weight:600; font-size:26px; text-align:center; line-height:1.2;
+    padding:18px 30px 26px; min-height:96px; display:flex; align-items:center; justify-content:center;
+  }
+  .badge-strip{
+    background:rgba(0,0,0,.22); padding:22px 26px 26px; border-top:1px solid rgba(255,255,255,.08);
+  }
+  .q-label{font-size:13px; color:var(--ice); margin-bottom:10px; text-align:center;}
+  .toggle-row{display:flex; gap:8px; margin-bottom:18px;}
+  .toggle-btn{
+    flex:1; padding:11px 8px; border-radius:9px; background:rgba(255,255,255,.08); color:#fff;
+    font-size:13.5px; font-weight:600; border:1.5px solid transparent; transition:all .15s ease;
+  }
+  .toggle-btn.active{background:var(--gold); color:var(--navy-dark); border-color:var(--gold);}
+  .sens-label{font-size:13px; color:var(--ice); margin-bottom:10px; text-align:center;}
+  .sens-row{display:flex; gap:8px;}
+  .sens-btn{
+    flex:1; padding:14px 6px; border-radius:9px; font-size:13px; font-weight:700;
+    background:rgba(255,255,255,.06); color:#fff; border:1.5px solid rgba(255,255,255,.14);
+    transition:all .15s ease; font-family:var(--mono); letter-spacing:.02em;
+  }
+  .sens-btn[data-lvl="faible"].active{background:var(--low); border-color:var(--low);}
+  .sens-btn[data-lvl="moyen"].active{background:var(--mid); border-color:var(--mid); color:var(--navy-dark);}
+  .sens-btn[data-lvl="eleve"].active{background:var(--high); border-color:var(--high);}
+  .sens-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+  .nav-row{display:flex; gap:10px; max-width:400px; width:100%; margin:22px auto 0;}
+  .btn-ghost{
+    flex:none; padding:13px 18px; border-radius:10px; background:transparent; color:var(--gray);
+    font-weight:600; font-size:14px; border:1.5px solid #DCD7C8;
+  }
+  .btn-ghost:hover{border-color:var(--navy); color:var(--navy);}
+  .btn-next{
+    flex:1; padding:13px 18px; border-radius:10px; background:var(--navy); color:#fff; font-weight:600; font-size:14.5px;
+  }
+  .btn-next:disabled{background:#C7C9D6; cursor:not-allowed;}
+  .btn-next:not(:disabled):hover{background:var(--navy-dark);}
+
+  /* ---------- PARTICIPANT: SUMMARY ---------- */
+  .summary-wrap{max-width:520px; width:100%; text-align:center;}
+  .summary-wrap .eyebrow{display:block; margin-bottom:10px;}
+  .big-number{
+    font-family:var(--serif); font-size:96px; font-weight:700; color:var(--navy); line-height:1; margin:6px 0;
+  }
+  .big-number .unit{font-size:22px; color:var(--gray); font-family:var(--sans); font-weight:600; margin-left:6px;}
+  .summary-sub{color:var(--gray); font-size:15px; max-width:34em; margin:6px auto 26px; line-height:1.6;}
+  .mini-stats{display:flex; gap:12px; justify-content:center; margin-bottom:30px; flex-wrap:wrap;}
+  .mini-stat{
+    background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:14px 20px; min-width:110px;
+  }
+  .mini-stat .n{font-family:var(--mono); font-size:24px; font-weight:600;}
+  .mini-stat .l{font-size:11.5px; color:var(--gray); margin-top:4px; letter-spacing:.02em;}
+  .mini-stat.low .n{color:var(--low);} .mini-stat.mid .n{color:var(--mid);} .mini-stat.high .n{color:var(--high);}
+  .summary-msg{
+    background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:22px 26px; text-align:left;
+    font-size:14.5px; line-height:1.65; color:var(--ink);
+  }
+  .summary-msg strong{color:var(--navy);}
+
+  /* ---------- FACILITATOR ---------- */
+  #view-dash{min-height:100vh; background:var(--paper);}
+  .dash-wrap{max-width:1080px; margin:0 auto; padding:28px 24px 60px;}
+  .dash-head{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:26px;}
+  .dash-head h2{font-family:var(--serif); font-size:32px; font-weight:600; color:var(--navy);}
+  .live-pill{
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11.5px;
+    color:var(--navy); background:#fff; border:1.5px solid #E4E0D5; border-radius:30px; padding:7px 14px;
+  }
+  .live-pill .blip{width:7px; height:7px; border-radius:50%; background:var(--low); animation:blip 1.8s ease infinite;}
+  @keyframes blip{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:30px;}
+  @media (max-width:700px){.stat-row{grid-template-columns:1fr;}}
+  .stat-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:20px 22px;}
+  .stat-card .n{font-family:var(--serif); font-size:40px; font-weight:700; color:var(--navy);}
+  .stat-card .l{font-size:12.5px; color:var(--gray); margin-top:2px;}
+  .stat-card.accent{background:linear-gradient(155deg,var(--navy),var(--navy-dark)); border-color:transparent;}
+  .stat-card.accent .n{color:var(--gold);}
+  .stat-card.accent .l{color:var(--ice);}
+
+  .section-title{
+    font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray);
+    margin:34px 0 14px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after{content:""; flex:1; height:1px; background:#E4E0D5;}
+
+  .bar-row{display:flex; align-items:center; gap:16px; padding:11px 0; border-bottom:1px solid #EDEAE0;}
+  .bar-row:last-child{border-bottom:none;}
+  .bar-label{width:230px; flex:none; font-size:13.5px; color:var(--ink); font-weight:500;}
+  .bar-cat{font-family:var(--mono); font-size:10px; color:var(--gray); letter-spacing:.04em; display:block; margin-top:2px;}
+  .bar-track{flex:1; height:22px; border-radius:6px; overflow:hidden; display:flex; background:#EDEAE0;}
+  .bar-seg{height:100%; transition:width .4s ease;}
+  .bar-seg.low{background:var(--low);} .bar-seg.mid{background:var(--mid);} .bar-seg.high{background:var(--high);}
+  .bar-pct{width:52px; flex:none; text-align:right; font-family:var(--mono); font-size:12.5px; color:var(--high); font-weight:600;}
+
+  .empty-state{
+    text-align:center; padding:60px 20px; color:var(--gray); font-size:14.5px; background:#fff;
+    border:1.5px dashed #DCD7C8; border-radius:16px;
+  }
+  .empty-state .big{font-family:var(--serif); font-size:22px; color:var(--navy); margin-bottom:8px; font-weight:600;}
+
+  .legend{display:flex; gap:18px; margin-top:14px; flex-wrap:wrap;}
+  .legend span{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--gray);}
+  .legend i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+  .legend .low{background:var(--low);} .legend .mid{background:var(--mid);} .legend .high{background:var(--high);}
+
+  .refresh-note{font-family:var(--mono); font-size:11px; color:var(--gray); margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== LANDING ===================== -->
+  <div id="view-landing">
+    <div class="landing-hero">
+      <div class="badge-icon"></div>
+      <span class="eyebrow" style="color:var(--gold)">Module 1 · Lab interactif</span>
+      <h1>Traqueur d'Exposition</h1>
+      <p>Un jeu de tri rapide pour prendre conscience, en équipe, du nombre de comptes réellement sensibles que chacun gère au quotidien — sans jamais révéler le moindre détail personnel.</p>
+      <div class="module-tag">LES FONDAMENTAUX DE LA CYBERSÉCURITÉ — ÉDITION 2026</div>
+    </div>
+    <div class="landing-panel">
+      <span class="eyebrow" style="color:var(--gray)">Choisissez votre rôle</span>
+      <button class="role-card participant" onclick="goTo('pseudo')">
+        <div class="role-glyph">P</div>
+        <div>
+          <div class="role-title">Je suis participant</div>
+          <div class="role-sub">Triez 10 à 20 types de comptes en quelques minutes et découvrez votre score d'exposition, en toute confidentialité.</div>
+        </div>
+      </button>
+      <button class="role-card formateur" onclick="goTo('dash')">
+        <div class="role-glyph">F</div>
+        <div>
+          <div class="role-title">Je suis formateur</div>
+          <div class="role-sub">Suivez la progression du groupe en direct et préparez votre débrief avec des statistiques collectives.</div>
+        </div>
+      </button>
+      <p class="landing-note">Aucune donnée personnelle réelle n'est demandée : le jeu porte sur des <em>types</em> de comptes, jamais sur vos identifiants ou vos comptes précis.</p>
+    </div>
+  </div>
+
+  <!-- ===================== PSEUDO ===================== -->
+  <div id="view-pseudo" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Traqueur d'exposition</span></div>
+      <button class="link-back" onclick="goTo('landing')">← Retour</button>
+    </div>
+    <div class="center-wrap">
+      <div class="card-shell fade-in">
+        <span class="eyebrow">Étape 1 sur 3</span>
+        <h2>Comment vous appelle-t-on ?</h2>
+        <p class="desc">Un simple prénom ou pseudo suffit — il ne sert qu'à afficher votre résultat personnel à la fin.</p>
+        <input type="text" id="pseudo-input" placeholder="Ex. Salma, ou « Participant 4 »" maxlength="30" autocomplete="off">
+
+        <div style="margin-top:20px;">
+          <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray)">Nombre de cartes</span>
+          <div class="toggle-row" style="margin-bottom:0;">
+            <button class="toggle-btn mode-btn active" id="mode-court" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;" onclick="setMode('court')">Courte · 10 cartes (~10 min)</button>
+            <button class="toggle-btn mode-btn" id="mode-complet" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;" onclick="setMode('complet')">Complète · 20 cartes (~18 min)</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="pseudo-btn" onclick="startGame()" disabled>Commencer le tri →</button>
+        <div class="privacy-note">🔒 Vos réponses restent anonymisées pour le formateur : seuls des types de comptes et des niveaux de sensibilité sont enregistrés, jamais vos identifiants réels.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GAME ===================== -->
+  <div id="view-game" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Traqueur d'exposition</span></div>
+      <button class="link-back" onclick="if(confirm('Quitter le jeu et perdre votre progression ?'))goTo('landing')">Quitter</button>
+    </div>
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="progress-label">CARTE 1 / 10</div>
+    </div>
+    <div class="game-stage">
+      <div>
+        <div class="badge-card fade-in" id="badge-card">
+          <div class="hole"></div>
+          <div class="cat-tag" id="card-cat">CATÉGORIE</div>
+          <div class="type-label" id="card-label">Type de compte</div>
+          <div class="badge-strip">
+            <div class="q-label">Avez-vous ce type de compte ?</div>
+            <div class="toggle-row">
+              <button class="toggle-btn" id="toggle-oui" onclick="setHas(true)">Oui, j'en ai un</button>
+              <button class="toggle-btn" id="toggle-non" onclick="setHas(false)">Non, pas moi</button>
+            </div>
+            <div class="sens-label">Si un inconnu y accédait, l'impact serait…</div>
+            <div class="sens-row">
+              <button class="sens-btn" data-lvl="faible" onclick="setSens('faible')">FAIBLE</button>
+              <button class="sens-btn" data-lvl="moyen" onclick="setSens('moyen')">MOYEN</button>
+              <button class="sens-btn" data-lvl="eleve" onclick="setSens('eleve')">ÉLEVÉ</button>
+            </div>
+          </div>
+        </div>
+        <div class="nav-row">
+          <button class="btn-ghost" id="btn-prev" onclick="prevCard()">← Précédent</button>
+          <button class="btn-next" id="btn-next" onclick="nextCard()" disabled>Suivant →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SUMMARY ===================== -->
+  <div id="view-summary" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Traqueur d'exposition</span></div>
+      <button class="link-back" onclick="goTo('landing')">Terminer</button>
+    </div>
+    <div class="center-wrap">
+      <div class="summary-wrap fade-in">
+        <span class="eyebrow">Votre résultat — visible par vous seul(e)</span>
+        <div class="big-number"><span id="summary-high">0</span><span class="unit">comptes à impact élevé</span></div>
+        <p class="summary-sub" id="summary-sub">C'est le nombre de types de comptes que vous possédez et jugez vous-même très sensibles.</p>
+        <div class="mini-stats">
+          <div class="mini-stat low"><div class="n" id="summary-low">0</div><div class="l">FAIBLE</div></div>
+          <div class="mini-stat mid"><div class="n" id="summary-mid">0</div><div class="l">MOYEN</div></div>
+          <div class="mini-stat high"><div class="n" id="summary-high2">0</div><div class="l">ÉLEVÉ</div></div>
+        </div>
+        <div class="summary-msg">
+          <strong>À retenir :</strong> chaque compte à impact élevé mérite un mot de passe unique et, si possible, une authentification multifacteur — deux réflexes détaillés en profondeur au <strong>Module 5</strong> de ce parcours. Ce jeu n'a révélé aucun détail vous concernant à qui que ce soit : seul le compte global a été transmis au tableau de bord du formateur.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <div id="view-dash" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Traqueur d'exposition — Formateur</span></div>
+      <button class="link-back" onclick="goTo('landing')">← Retour</button>
+    </div>
+    <div class="dash-wrap">
+      <div class="dash-head">
+        <div>
+          <span class="eyebrow">Tableau de bord en direct</span>
+          <h2>Débrief collectif</h2>
+        </div>
+        <div class="live-pill"><span class="blip"></span> Actualisation automatique</div>
+      </div>
+
+      <div id="qr-block" class="stat-card" style="display:flex; align-items:center; gap:22px; margin-bottom:26px; flex-wrap:wrap;">
+        <div id="qr-canvas" style="flex:none; width:132px; height:132px; background:#fff; border-radius:10px; padding:8px; border:1px solid #E4E0D5;"></div>
+        <div style="flex:1; min-width:220px;">
+          <div class="section-title" style="margin:0 0 8px;">Faites rejoindre vos participants</div>
+          <p style="font-size:13.5px; color:var(--gray); line-height:1.55; margin-bottom:10px;">
+            Projetez ce QR code ou partagez le lien ci-dessous. Chaque participant choisit « Je suis participant » depuis son propre téléphone.
+          </p>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <code id="qr-url" style="font-family:var(--mono); font-size:12px; background:var(--paper); padding:8px 12px; border-radius:8px; border:1px solid #E4E0D5; word-break:break-all;"></code>
+            <button class="btn-ghost" style="padding:8px 14px; font-size:12.5px;" onclick="copyShareUrl()">Copier le lien</button>
+          </div>
+          <p id="qr-hint" style="font-size:12px; color:var(--gray); margin-top:10px; line-height:1.5;"></p>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><div class="n" id="dash-count">0</div><div class="l">Participants ayant joué</div></div>
+        <div class="stat-card"><div class="n" id="dash-avg">0</div><div class="l">Comptes « élevé » en moyenne / personne</div></div>
+        <div class="stat-card accent"><div class="n" id="dash-total">0</div><div class="l">Total de comptes sensibles identifiés dans la salle</div></div>
+      </div>
+
+      <div id="dash-empty" class="empty-state">
+        <div class="big">En attente des premiers résultats</div>
+        Demandez aux participants de rejoindre depuis leur téléphone et de choisir « Je suis participant ».
+      </div>
+
+      <div id="dash-content" class="hidden">
+        <div class="section-title">Perception de sensibilité par type de compte</div>
+        <div id="bar-list"></div>
+        <div class="legend">
+          <span><i class="low"></i> Faible</span>
+          <span><i class="mid"></i> Moyen</span>
+          <span><i class="high"></i> Élevé — trié du plus au moins consensuel</span>
+        </div>
+      </div>
+      <div class="refresh-note" id="refresh-note"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============ Données ============ */
+const ACCOUNT_TYPES = [
+  // --- Version originale (10) ---
+  { id:"mail-perso",   cat:"Email",                 label:"Ma boîte mail personnelle", core:true },
+  { id:"mail-pro",     cat:"Email",                 label:"Ma messagerie professionnelle", core:true },
+  { id:"banque",       cat:"Banque",                label:"Mon compte bancaire principal", core:true },
+  { id:"paiement",     cat:"Banque",                label:"Une application de paiement mobile", core:true },
+  { id:"reseau",       cat:"Réseaux sociaux",       label:"Mon réseau social principal", core:true },
+  { id:"messagerie",   cat:"Réseaux sociaux",       label:"Une messagerie instantanée", core:true },
+  { id:"impots",       cat:"Administratif",         label:"Mon espace impôts / administration", core:true },
+  { id:"secu",         cat:"Administratif",         label:"Mon compte sécurité sociale / CNSS", core:true },
+  { id:"outil-pro",    cat:"Professionnel",         label:"Un outil professionnel (CRM, ERP, intranet)", core:true },
+  { id:"cloud",        cat:"Professionnel",         label:"Mon espace de stockage cloud personnel", core:true },
+  // --- Ajouts : comptes sensibles ou importants supplémentaires (10) ---
+  { id:"gestionnaire-mdp", cat:"Sécurité",              label:"Mon gestionnaire de mots de passe" },
+  { id:"vpn-teletravail",  cat:"Professionnel",         label:"Mon accès VPN ou bureau à distance professionnel" },
+  { id:"sante-dossier",    cat:"Santé",                 label:"Mon dossier médical en ligne / téléconsultation" },
+  { id:"identite-nat",     cat:"Identité & documents",  label:"Mon identité numérique nationale (CNIE électronique, portail public)" },
+  { id:"investissement",   cat:"Banque",                label:"Un compte d'investissement ou de cryptomonnaies" },
+  { id:"achat-marchand",   cat:"Banque",                label:"Un compte marchand avec carte enregistrée (achats en ligne)" },
+  { id:"assurance",        cat:"Administratif",         label:"Mon compte assurance (auto, habitation, santé)" },
+  { id:"scolarite",        cat:"Administratif",         label:"Le compte scolaire / universitaire de mes enfants" },
+  { id:"photos-cloud",     cat:"Identité & documents",  label:"Mon espace de stockage de photos personnelles" },
+  { id:"fidelite-voyage",  cat:"Loisirs & consommation",label:"Un compte de fidélité voyage (avion, hôtel)" },
+];
+const SENS_SCORE = { faible:1, moyen:2, eleve:3 };
+
+/* ============ État ============ */
+let pseudo = "";
+let mode = "court";
+let gameList = ACCOUNT_TYPES.filter(t=>t.core);
+let idx = 0;
+let answers = {}; // { typeId: { has:bool, sens:"faible"|"moyen"|"eleve" } }
+let pollTimer = null;
+
+function setMode(m){
+  mode = m;
+  gameList = (m==="court") ? ACCOUNT_TYPES.filter(t=>t.core) : ACCOUNT_TYPES;
+  document.getElementById("mode-court").classList.toggle("active", m==="court");
+  document.getElementById("mode-complet").classList.toggle("active", m==="complet");
+}
+
+/* ============ Navigation ============ */
+function goTo(view){
+  ["landing","pseudo","game","summary","dash"].forEach(v=>{
+    document.getElementById("view-"+v).classList.toggle("hidden", v!==view);
+  });
+  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+  if(view==="dash"){ renderShareBlock(); refreshDashboard(); pollTimer=setInterval(refreshDashboard, 4000); }
+  if(view==="pseudo"){ document.getElementById("pseudo-input").focus(); }
+}
+
+document.getElementById("pseudo-input").addEventListener("input", (e)=>{
+  document.getElementById("pseudo-btn").disabled = e.target.value.trim().length===0;
+});
+document.getElementById("pseudo-input").addEventListener("keydown", (e)=>{
+  if(e.key==="Enter" && e.target.value.trim().length>0) startGame();
+});
+
+function startGame(){
+  pseudo = document.getElementById("pseudo-input").value.trim() || "Participant";
+  idx = 0; answers = {};
+  goTo("game");
+  renderCard();
+}
+
+/* ============ Jeu de tri ============ */
+function renderCard(){
+  const t = gameList[idx];
+  document.getElementById("card-cat").textContent = t.cat;
+  document.getElementById("card-label").textContent = t.label;
+  document.getElementById("progress-fill").style.width = ((idx)/gameList.length*100)+"%";
+  document.getElementById("progress-label").textContent = "CARTE "+(idx+1)+" / "+gameList.length;
+
+  const a = answers[t.id] || {};
+  document.getElementById("toggle-oui").classList.toggle("active", a.has===true);
+  document.getElementById("toggle-non").classList.toggle("active", a.has===false);
+  document.querySelectorAll(".sens-btn").forEach(b=>{
+    b.classList.toggle("active", a.sens===b.dataset.lvl);
+    b.disabled = (a.has===undefined);
+  });
+  document.getElementById("btn-prev").style.visibility = idx===0 ? "hidden":"visible";
+  updateNextState();
+}
+
+function setHas(val){
+  const t = gameList[idx];
+  answers[t.id] = Object.assign({}, answers[t.id], { has: val });
+  if(val===false){ answers[t.id].sens = answers[t.id].sens || "faible"; }
+  renderCard();
+}
+function setSens(lvl){
+  const t = gameList[idx];
+  if(!answers[t.id] || answers[t.id].has===undefined) return;
+  answers[t.id].sens = lvl;
+  renderCard();
+}
+function updateNextState(){
+  const t = gameList[idx];
+  const a = answers[t.id];
+  const ready = a && a.has!==undefined && a.sens;
+  document.getElementById("btn-next").disabled = !ready;
+  document.getElementById("btn-next").textContent = idx===gameList.length-1 ? "Voir mon résultat →" : "Suivant →";
+}
+function prevCard(){ if(idx>0){ idx--; renderCard(); } }
+function nextCard(){
+  const t = gameList[idx];
+  if(!answers[t.id] || answers[t.id].sens===undefined) return;
+  if(idx < gameList.length-1){ idx++; renderCard(); }
+  else { finishGame(); }
+}
+
+async function finishGame(){
+  let low=0, mid=0, high=0;
+  const perType = {};
+  ACCOUNT_TYPES.forEach(t=>{
+    const a = answers[t.id];
+    perType[t.id] = a || { has:false, sens:"faible" };
+    if(a && a.has){
+      if(a.sens==="faible") low++;
+      else if(a.sens==="moyen") mid++;
+      else if(a.sens==="eleve") high++;
+    }
+  });
+
+  document.getElementById("summary-low").textContent = low;
+  document.getElementById("summary-mid").textContent = mid;
+  document.getElementById("summary-high").textContent = high;
+  document.getElementById("summary-high2").textContent = high;
+  document.getElementById("summary-sub").textContent =
+    high>=3 ? "C'est au-dessus de la moyenne : vous gérez plusieurs comptes dont la compromission aurait un impact réel."
+             : "Un score maîtrisé — restez tout de même vigilant sur ces comptes au quotidien.";
+
+  goTo("summary");
+
+  const record = {
+    pseudo: pseudo,
+    ts: Date.now(),
+    low, mid, high,
+    perType
+  };
+  try{
+    const key = "resp:" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
+    await window.storage.set(key, JSON.stringify(record), true);
+  }catch(e){ console.error("Erreur d'enregistrement", e); }
+}
+
+/* ============ Partage / QR code ============ */
+let qrRendered = false;
+function renderShareBlock(){
+  const url = window.location.href;
+  document.getElementById("qr-url").textContent = url;
+  const isLocalOrFile = /^file:|localhost|127\.0\.0\.1/.test(url);
+  document.getElementById("qr-hint").textContent = isLocalOrFile
+    ? "⚠️ Vous consultez cette page en local. Ouvrez plutôt l'adresse GitHub Pages du dépôt (https://votre-nom.github.io/...) pour que ce lien soit accessible depuis n'importe quel téléphone."
+    : "Ce lien fonctionne sur n'importe quel téléphone, sans installation.";
+  if(!qrRendered && typeof QRCode !== "undefined"){
+    try{
+      new QRCode(document.getElementById("qr-canvas"), {
+        text: url, width:116, height:116, colorDark:"#12173F", colorLight:"#ffffff"
+      });
+      qrRendered = true;
+    }catch(e){ console.error("QR non généré", e); }
+  }
+}
+function copyShareUrl(){
+  const url = window.location.href;
+  navigator.clipboard && navigator.clipboard.writeText(url).then(()=>{
+    const btn = event.target;
+    const old = btn.textContent; btn.textContent = "Copié !";
+    setTimeout(()=> btn.textContent = old, 1500);
+  });
+}
+
+/* ============ Tableau de bord formateur ============ */
+async function refreshDashboard(){
+  const noteEl = document.getElementById("refresh-note");
+  try{
+    const list = await window.storage.list("resp:", true);
+    const keys = (list && list.keys) || [];
+    if(keys.length===0){
+      document.getElementById("dash-empty").classList.remove("hidden");
+      document.getElementById("dash-content").classList.add("hidden");
+      document.getElementById("dash-count").textContent = "0";
+      document.getElementById("dash-avg").textContent = "0";
+      document.getElementById("dash-total").textContent = "0";
+      noteEl.textContent = "Dernière actualisation : " + new Date().toLocaleTimeString("fr-FR");
+      return;
+    }
+    const records = [];
+    for(const k of keys){
+      try{
+        const res = await window.storage.get(k, true);
+        if(res && res.value) records.push(JSON.parse(res.value));
+      }catch(e){ /* ignore single-key failure */ }
+    }
+    if(records.length===0){
+      noteEl.textContent = "Dernière actualisation : " + new Date().toLocaleTimeString("fr-FR");
+      return;
+    }
+
+    document.getElementById("dash-empty").classList.add("hidden");
+    document.getElementById("dash-content").classList.remove("hidden");
+
+    const totalHigh = records.reduce((s,r)=>s+(r.high||0),0);
+    document.getElementById("dash-count").textContent = records.length;
+    document.getElementById("dash-avg").textContent = (totalHigh/records.length).toFixed(1);
+    document.getElementById("dash-total").textContent = totalHigh;
+
+    // Agrégation par type
+    const agg = {};
+    ACCOUNT_TYPES.forEach(t=> agg[t.id] = { faible:0, moyen:0, eleve:0, ownersCount:0 });
+    records.forEach(r=>{
+      ACCOUNT_TYPES.forEach(t=>{
+        const a = r.perType && r.perType[t.id];
+        if(a && a.has){
+          agg[t.id][a.sens] = (agg[t.id][a.sens]||0) + 1;
+          agg[t.id].ownersCount++;
+        }
+      });
+    });
+
+    const rows = ACCOUNT_TYPES.map(t=>{
+      const a = agg[t.id];
+      const total = a.faible+a.moyen+a.eleve;
+      const pctHigh = total>0 ? Math.round(a.eleve/total*100) : 0;
+      return { t, a, total, pctHigh };
+    }).sort((x,y)=> y.pctHigh - x.pctHigh);
+
+    const barList = document.getElementById("bar-list");
+    barList.innerHTML = "";
+    rows.forEach(r=>{
+      const total = r.total || 1;
+      const wLow = r.a.faible/total*100, wMid = r.a.moyen/total*100, wHigh = r.a.eleve/total*100;
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `
+        <div class="bar-label">${r.t.label}<span class="bar-cat">${r.t.cat} · ${r.total} possesseur(s)</span></div>
+        <div class="bar-track">
+          <div class="bar-seg low" style="width:${wLow}%"></div>
+          <div class="bar-seg mid" style="width:${wMid}%"></div>
+          <div class="bar-seg high" style="width:${wHigh}%"></div>
+        </div>
+        <div class="bar-pct">${r.total>0 ? r.pctHigh+"%" : "—"}</div>
+      `;
+      barList.appendChild(row);
+    });
+
+    noteEl.textContent = "Dernière actualisation : " + new Date().toLocaleTimeString("fr-FR") + " · " + records.length + " réponse(s)";
+  }catch(e){
+    console.error("Erreur tableau de bord", e);
+    noteEl.textContent = "Actualisation en attente…";
+  }
+}
+</script>
+</body>
+</html>
