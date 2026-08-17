@@ -60,8 +60,10 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
          "$labId": {
            ".read": true,
            ".write": true,
-           "$path": {
-             ".validate": "newData.hasChildren(['value', 'ts'])"
+           "$category": {
+             "$key": {
+               ".validate": "newData.hasChildren(['value', 'ts'])"
+             }
            }
          }
        }
