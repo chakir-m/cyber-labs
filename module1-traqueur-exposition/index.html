@@ -585,8 +585,15 @@ async function finishGame(){
   };
   try{
     const key = "resp:" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
-    await window.storage.set(key, JSON.stringify(record), true);
-  }catch(e){ console.error("Erreur d'enregistrement", e); }
+    const result = await window.storage.set(key, JSON.stringify(record), true);
+    if(!result) throw new Error("Échec de l'enregistrement (résultat vide)");
+  }catch(e){
+    console.error("Erreur d'enregistrement", e);
+    const warn = document.createElement("div");
+    warn.style.cssText = "margin-top:14px; background:#FBEAEA; border:1px dashed #E4A9A3; color:#8A2E27; font-size:12.5px; padding:10px 14px; border-radius:10px; text-align:left; line-height:1.5;";
+    warn.textContent = "⚠️ Votre résultat personnel ci-dessus reste valable, mais il n'a pas pu être transmis au tableau de bord du formateur (problème de connexion ou de configuration). Signalez-le si cela se reproduit.";
+    document.querySelector(".summary-msg").insertAdjacentElement("afterend", warn);
+  }
 }
 
 /* ============ Partage / QR code ============ */
