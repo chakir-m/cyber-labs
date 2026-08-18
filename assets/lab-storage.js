@@ -87,5 +87,17 @@
       const keys = prefix ? all.filter((k) => k.startsWith(sanitizeKey(prefix))) : all;
       return { keys, prefix: prefix || "", shared: !!shared };
     },
+
+    // Supprime toutes les données partagées (ou privées) de CE lab uniquement
+    // — n'affecte jamais les autres labs, qui vivent sous un autre LAB_ID.
+    async clear(shared) {
+      try {
+        await db.ref(basePath(shared)).remove();
+        return { cleared: true, shared: !!shared };
+      } catch (e) {
+        console.error("[lab-storage] Erreur clear:", e);
+        return null;
+      }
+    },
   };
 })();
