@@ -242,6 +242,26 @@
   }
   .section-title::after{content:""; flex:1; height:1px; background:#E4E0D5;}
 
+  .participant-row{
+    display:flex; align-items:center; gap:14px; padding:12px 16px; background:#fff;
+    border:1.5px solid #E4E0D5; border-radius:12px; margin-bottom:8px;
+  }
+  .participant-avatar{
+    flex:none; width:36px; height:36px; border-radius:50%; background:var(--navy); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:600; font-size:14px;
+  }
+  .participant-name{flex:1; font-size:14px; font-weight:600; color:var(--ink); min-width:110px;}
+  .participant-time{font-family:var(--mono); font-size:10.5px; color:var(--gray); flex:none;}
+  .participant-scores{display:flex; gap:6px; flex:none;}
+  .score-chip{
+    font-family:var(--mono); font-size:11.5px; font-weight:600; padding:5px 10px; border-radius:20px;
+    min-width:34px; text-align:center;
+  }
+  .score-chip.low{background:#E7F3EC; color:var(--low);}
+  .score-chip.mid{background:#FBF3E2; color:#93761F;}
+  .score-chip.high{background:#FBEAEA; color:var(--high);}
+  .participant-empty{color:var(--gray); font-size:13px; padding:14px 4px;}
+
   .bar-row{display:flex; align-items:center; gap:16px; padding:11px 0; border-bottom:1px solid #EDEAE0;}
   .bar-row:last-child{border-bottom:none;}
   .bar-label{width:230px; flex:none; font-size:13.5px; color:var(--ink); font-weight:500;}
@@ -427,6 +447,9 @@
       </div>
 
       <div id="dash-content" class="hidden">
+        <div class="section-title">Résultats par participant</div>
+        <div id="participant-list"></div>
+
         <div class="section-title">Perception de sensibilité par type de compte</div>
         <div id="bar-list"></div>
         <div class="legend">
@@ -624,6 +647,11 @@ function copyShareUrl(){
 }
 
 /* ============ Tableau de bord formateur ============ */
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 async function refreshDashboard(){
   const noteEl = document.getElementById("refresh-note");
   try{
@@ -657,6 +685,32 @@ async function refreshDashboard(){
     document.getElementById("dash-count").textContent = records.length;
     document.getElementById("dash-avg").textContent = (totalHigh/records.length).toFixed(1);
     document.getElementById("dash-total").textContent = totalHigh;
+
+    // Liste par participant, plus récent en premier
+    const participantList = document.getElementById("participant-list");
+    participantList.innerHTML = "";
+    const sortedRecords = [...records].sort((a,b)=> (b.ts||0)-(a.ts||0));
+    sortedRecords.forEach(r=>{
+      const name = (r.pseudo || "Participant").trim();
+      const initial = name.charAt(0).toUpperCase();
+      const time = r.ts ? new Date(r.ts).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
+      const row = document.createElement("div");
+      row.className = "participant-row";
+      row.innerHTML = `
+        <div class="participant-avatar">${initial}</div>
+        <div class="participant-name">${escapeHtml(name)}</div>
+        <div class="participant-time">${time}</div>
+        <div class="participant-scores">
+          <span class="score-chip low" title="Comptes à impact faible">${r.low||0} F</span>
+          <span class="score-chip mid" title="Comptes à impact moyen">${r.mid||0} M</span>
+          <span class="score-chip high" title="Comptes à impact élevé">${r.high||0} É</span>
+        </div>
+      `;
+      participantList.appendChild(row);
+    });
+    if(sortedRecords.length===0){
+      participantList.innerHTML = '<div class="participant-empty">Aucun participant pour le moment.</div>';
+    }
 
     // Agrégation par type
     const agg = {};
