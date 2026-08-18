@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="../assets/firebase-config.js"></script>
 <script src="../assets/lab-storage.js"></script>
+<script src="../assets/formateur-auth.js"></script>
 <style>
   :root{
     --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3;
@@ -306,7 +307,7 @@
           <div class="role-sub">Triez 10 à 20 types de comptes en quelques minutes et découvrez votre score d'exposition, en toute confidentialité.</div>
         </div>
       </button>
-      <button class="role-card formateur" onclick="goTo('dash')">
+      <button class="role-card formateur" onclick="attemptFormateurAccess()">
         <div class="role-glyph">F</div>
         <div>
           <div class="role-title">Je suis formateur</div>
@@ -465,6 +466,36 @@
     </div>
   </div>
 
+  <!-- ===================== DÉTAIL PARTICIPANT (nouvel onglet, pas de rafraîchissement) ===================== -->
+  <div id="view-detail" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Traqueur d'exposition — Détail</span></div>
+      <button class="link-back" onclick="window.close()">Fermer l'onglet</button>
+    </div>
+    <div class="dash-wrap" style="max-width:640px;">
+      <div id="detail-loading" style="padding:60px 0; text-align:center; color:var(--gray);">Chargement du détail…</div>
+      <div id="detail-content" class="hidden">
+        <div class="dash-head" style="margin-bottom:18px;">
+          <div>
+            <span class="eyebrow">Détail individuel</span>
+            <h2 id="detail-name">—</h2>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="n" id="detail-low">0</div><div class="l">Comptes faibles</div></div>
+          <div class="stat-card"><div class="n" id="detail-mid">0</div><div class="l">Comptes moyens</div></div>
+          <div class="stat-card accent"><div class="n" id="detail-high">0</div><div class="l">Comptes élevés</div></div>
+        </div>
+        <div class="section-title">Réponse type par type</div>
+        <div id="detail-types"></div>
+      </div>
+      <div id="detail-error" class="hidden empty-state">
+        <div class="big">Détail introuvable</div>
+        Ce résultat a peut-être été supprimé, ou le lien a expiré.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -511,6 +542,10 @@ function setMode(m){
 }
 
 /* ============ Navigation ============ */
+async function attemptFormateurAccess(){
+  const ok = await ensureFormateurAccess();
+  if(ok) goTo('dash');
+}
 function goTo(view){
   ["landing","pseudo","game","summary","dash"].forEach(v=>{
     document.getElementById("view-"+v).classList.toggle("hidden", v!==view);
@@ -710,7 +745,11 @@ async function refreshDashboard(){
     for(const k of keys){
       try{
         const res = await window.storage.get(k, true);
-        if(res && res.value) records.push(JSON.parse(res.value));
+        if(res && res.value){
+          const rec = JSON.parse(res.value);
+          rec._key = k;
+          records.push(rec);
+        }
       }catch(e){ /* ignore single-key failure */ }
     }
     if(records.length===0){
@@ -734,11 +773,9 @@ async function refreshDashboard(){
       const name = (r.pseudo || "Participant").trim();
       const initial = name.charAt(0).toUpperCase();
       const time = r.ts ? new Date(r.ts).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
-      const rowId = "p-detail-"+i;
       const row = document.createElement("div");
       row.className = "participant-row";
       row.style.cursor = "pointer";
-      row.style.flexWrap = "wrap";
       row.innerHTML = `
         <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:260px;">
           <div class="participant-avatar">${initial}</div>
@@ -749,18 +786,12 @@ async function refreshDashboard(){
           <span class="score-chip low" title="Comptes à impact faible">${r.low||0} F</span>
           <span class="score-chip mid" title="Comptes à impact moyen">${r.mid||0} M</span>
           <span class="score-chip high" title="Comptes à impact élevé">${r.high||0} É</span>
-          <span style="font-family:var(--mono); font-size:11px; color:var(--gray); margin-left:4px;">▾ détail</span>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--gray); margin-left:4px;">↗ détail</span>
         </div>
-        <div id="${rowId}" class="hidden" style="width:100%; margin-top:12px; padding-top:12px; border-top:1px dashed #E4E0D5;"></div>
       `;
       row.addEventListener("click", ()=>{
-        const detail = row.querySelector("#"+rowId);
-        const isHidden = detail.classList.contains("hidden");
-        if(isHidden && !detail.dataset.filled){
-          detail.innerHTML = buildParticipantDetail(r);
-          detail.dataset.filled = "1";
-        }
-        detail.classList.toggle("hidden");
+        const url = location.pathname + "?pdetail=" + encodeURIComponent(r._key);
+        window.open(url, "_blank");
       });
       participantList.appendChild(row);
     });
@@ -813,6 +844,41 @@ async function refreshDashboard(){
     noteEl.textContent = "Actualisation en attente…";
   }
 }
+
+/* ============ Vue détail (nouvel onglet, pas de rafraîchissement) ============ */
+(async function initDetailViewIfNeeded(){
+  const key = new URLSearchParams(location.search).get("pdetail");
+  if(!key) return;
+
+  ["landing","pseudo","game","summary","dash"].forEach(v=>{
+    document.getElementById("view-"+v).classList.add("hidden");
+  });
+  document.getElementById("view-detail").classList.remove("hidden");
+
+  const ok = await ensureFormateurAccess();
+  if(!ok){
+    document.getElementById("detail-loading").classList.add("hidden");
+    document.getElementById("detail-error").classList.remove("hidden");
+    document.querySelector("#detail-error .big").textContent = "Accès refusé";
+    return;
+  }
+
+  try{
+    const res = await window.storage.get(key, true);
+    const record = JSON.parse(res.value);
+    document.getElementById("detail-name").textContent = record.pseudo || "Participant";
+    document.getElementById("detail-low").textContent = record.low||0;
+    document.getElementById("detail-mid").textContent = record.mid||0;
+    document.getElementById("detail-high").textContent = record.high||0;
+    document.getElementById("detail-types").innerHTML = buildParticipantDetail(record);
+    document.getElementById("detail-loading").classList.add("hidden");
+    document.getElementById("detail-content").classList.remove("hidden");
+  }catch(e){
+    console.error("Détail introuvable", e);
+    document.getElementById("detail-loading").classList.add("hidden");
+    document.getElementById("detail-error").classList.remove("hidden");
+  }
+})();
 </script>
 </body>
 </html>
