@@ -399,7 +399,7 @@
           <div class="mini-stat high"><div class="n" id="summary-high2">0</div><div class="l">ÉLEVÉ</div></div>
         </div>
         <div class="summary-msg">
-          <strong>À retenir :</strong> chaque compte à impact élevé mérite un mot de passe unique et, si possible, une authentification multifacteur — deux réflexes détaillés en profondeur au <strong>Module 5</strong> de ce parcours. Ce jeu n'a révélé aucun détail vous concernant à qui que ce soit : seul le compte global a été transmis au tableau de bord du formateur.
+          <strong>À retenir :</strong> chaque compte à impact élevé mérite un mot de passe unique et, si possible, une authentification multifacteur — deux réflexes détaillés en profondeur au <strong>Module 5</strong> de ce parcours. Ce jeu n'a jamais demandé le moindre identifiant réel : seuls des <strong>types</strong> de comptes et vos niveaux de sensibilité perçus sont visibles par le formateur, jamais vos comptes précis, mots de passe ou données personnelles.
         </div>
       </div>
     </div>
@@ -417,7 +417,10 @@
           <span class="eyebrow">Tableau de bord en direct</span>
           <h2>Débrief collectif</h2>
         </div>
-        <div class="live-pill"><span class="blip"></span> Actualisation automatique</div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="live-pill"><span class="blip"></span> Actualisation automatique</div>
+          <button class="btn-ghost" style="padding:9px 16px; font-size:12.5px; color:var(--high); border-color:#E4A9A3;" onclick="resetDatabase()">🗑 Réinitialiser</button>
+        </div>
       </div>
 
       <div id="qr-block" class="stat-card" style="display:flex; align-items:center; gap:22px; margin-bottom:26px; flex-wrap:wrap;">
@@ -646,6 +649,43 @@ function copyShareUrl(){
   });
 }
 
+function buildParticipantDetail(record){
+  const perType = record.perType || {};
+  const rows = ACCOUNT_TYPES.map(t=>{
+    const a = perType[t.id];
+    const has = a && a.has;
+    const sens = a ? a.sens : null;
+    const sensLabel = sens ? sens.toUpperCase() : "—";
+    const sensClass = sens==="eleve" ? "high" : sens==="moyen" ? "mid" : "low";
+    return `
+      <div style="display:flex; align-items:center; gap:10px; padding:6px 0; font-size:12.5px;">
+        <span style="flex:1; color:${has?'var(--ink)':'var(--gray)'};">${has?'●':'○'} ${escapeHtml(t.label)}</span>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--gray); width:70px;">${t.cat}</span>
+        ${has ? `<span class="score-chip ${sensClass}" style="min-width:60px;">${sensLabel}</span>` : `<span style="font-family:var(--mono); font-size:11px; color:var(--gray); width:60px; text-align:center;">n'a pas</span>`}
+      </div>`;
+  }).join("");
+  return `<div style="max-width:520px;">${rows}</div>`;
+}
+
+/* ============ Réinitialisation ============ */
+async function resetDatabase(){
+  const step1 = confirm("Effacer définitivement toutes les réponses de cette session (" + gameList.length + " types de comptes, tous les participants) ? Cette action est irréversible.");
+  if(!step1) return;
+  const typed = prompt("Pour confirmer, tapez EFFACER en majuscules :");
+  if(typed !== "EFFACER"){
+    alert("Réinitialisation annulée.");
+    return;
+  }
+  try{
+    await window.storage.clear(true);
+    await refreshDashboard();
+    alert("Les données de cette session ont été effacées.");
+  }catch(e){
+    console.error("Erreur de réinitialisation", e);
+    alert("La réinitialisation a échoué. Vérifiez votre connexion et réessayez.");
+  }
+}
+
 /* ============ Tableau de bord formateur ============ */
 function escapeHtml(str){
   const div = document.createElement("div");
@@ -690,22 +730,38 @@ async function refreshDashboard(){
     const participantList = document.getElementById("participant-list");
     participantList.innerHTML = "";
     const sortedRecords = [...records].sort((a,b)=> (b.ts||0)-(a.ts||0));
-    sortedRecords.forEach(r=>{
+    sortedRecords.forEach((r,i)=>{
       const name = (r.pseudo || "Participant").trim();
       const initial = name.charAt(0).toUpperCase();
       const time = r.ts ? new Date(r.ts).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
+      const rowId = "p-detail-"+i;
       const row = document.createElement("div");
       row.className = "participant-row";
+      row.style.cursor = "pointer";
+      row.style.flexWrap = "wrap";
       row.innerHTML = `
-        <div class="participant-avatar">${initial}</div>
-        <div class="participant-name">${escapeHtml(name)}</div>
-        <div class="participant-time">${time}</div>
+        <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:260px;">
+          <div class="participant-avatar">${initial}</div>
+          <div class="participant-name">${escapeHtml(name)}</div>
+          <div class="participant-time">${time}</div>
+        </div>
         <div class="participant-scores">
           <span class="score-chip low" title="Comptes à impact faible">${r.low||0} F</span>
           <span class="score-chip mid" title="Comptes à impact moyen">${r.mid||0} M</span>
           <span class="score-chip high" title="Comptes à impact élevé">${r.high||0} É</span>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--gray); margin-left:4px;">▾ détail</span>
         </div>
+        <div id="${rowId}" class="hidden" style="width:100%; margin-top:12px; padding-top:12px; border-top:1px dashed #E4E0D5;"></div>
       `;
+      row.addEventListener("click", ()=>{
+        const detail = row.querySelector("#"+rowId);
+        const isHidden = detail.classList.contains("hidden");
+        if(isHidden && !detail.dataset.filled){
+          detail.innerHTML = buildParticipantDetail(r);
+          detail.dataset.filled = "1";
+        }
+        detail.classList.toggle("hidden");
+      });
       participantList.appendChild(row);
     });
     if(sortedRecords.length===0){
