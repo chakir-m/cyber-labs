@@ -16,28 +16,51 @@
   body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
   .hero{
     background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
-    color:#fff; padding:64px 24px 56px; text-align:center;
+    color:#fff; padding:60px 24px 50px; text-align:center;
   }
   .hero .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); font-weight:600;}
-  .hero h1{font-family:var(--serif); font-size:clamp(30px,5vw,44px); font-weight:700; margin:14px 0 10px;}
-  .hero p{color:var(--ice); font-size:15.5px; max-width:36em; margin:0 auto;}
-  .wrap{max-width:760px; margin:0 auto; padding:44px 24px 80px;}
-  .lab-list{display:flex; flex-direction:column; gap:14px;}
-  .lab-card{
-    display:flex; align-items:center; gap:18px; background:#fff; border:1.5px solid #E4E0D5;
-    border-radius:14px; padding:20px 22px; text-decoration:none; color:inherit;
-    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  .hero h1{font-family:var(--serif); font-size:clamp(28px,5vw,42px); font-weight:700; margin:14px 0 10px;}
+  .hero p{color:var(--ice); font-size:15px; max-width:36em; margin:0 auto;}
+
+  .wrap{max-width:820px; margin:0 auto; padding:40px 20px 80px;}
+
+  .module-group{margin-bottom:34px;}
+  .module-header{
+    display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:12px 12px 0 0;
+    background:var(--navy); color:#fff;
   }
-  .lab-card:hover{border-color:var(--gold); transform:translateY(-2px); box-shadow:0 10px 24px rgba(30,39,97,.08);}
-  .lab-num{
-    flex:none; width:44px; height:44px; border-radius:10px; background:var(--navy); color:var(--gold);
-    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:600; font-size:15px;
+  .module-header .module-num{
+    flex:none; width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,.12);
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px; color:var(--gold);
   }
-  .lab-title{font-family:var(--serif); font-weight:600; font-size:17.5px; color:var(--navy);}
-  .lab-sub{font-size:13px; color:var(--gray); margin-top:2px;}
-  .lab-status{margin-left:auto; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:20px;}
-  .status-live{background:#E7F3EC; color:#1B7A43;}
-  .status-soon{background:#F2F0EA; color:var(--gray);}
+  .module-header .module-title{font-family:var(--serif); font-weight:600; font-size:17.5px;}
+  .module-header .module-count{
+    margin-left:auto; font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; color:var(--ice);
+    background:rgba(255,255,255,.1); padding:4px 10px; border-radius:20px; white-space:nowrap;
+  }
+  .module-group.is-empty .module-header{background:#DCD7C8; color:var(--gray);}
+  .module-group.is-empty .module-header .module-num{background:rgba(255,255,255,.4); color:var(--gray);}
+  .module-group.is-empty .module-header .module-count{background:rgba(255,255,255,.3); color:var(--gray);}
+
+  .lab-list{
+    display:flex; flex-direction:column; background:#fff; border:1.5px solid #E4E0D5; border-top:none;
+    border-radius:0 0 12px 12px; overflow:hidden;
+  }
+  .lab-row{
+    display:flex; align-items:center; gap:14px; padding:16px 18px; text-decoration:none; color:inherit;
+    border-bottom:1px solid #EDEAE0; transition:background .15s ease;
+  }
+  .lab-row:last-child{border-bottom:none;}
+  .lab-row:hover{background:var(--paper);}
+  .lab-icon{
+    flex:none; width:34px; height:34px; border-radius:8px; background:var(--gold); color:var(--navy-dark);
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .lab-title{font-weight:600; font-size:14.5px; color:var(--navy);}
+  .lab-sub{font-size:12px; color:var(--gray); margin-top:2px;}
+  .lab-arrow{margin-left:auto; color:var(--gray); font-family:var(--mono); font-size:14px; flex:none;}
+  .empty-row{padding:16px 18px; font-size:13px; color:var(--gray); font-style:italic;}
+
   .footer-note{margin-top:40px; font-size:12.5px; color:var(--gray); line-height:1.6; text-align:center;}
 </style>
 </head>
@@ -45,40 +68,73 @@
   <div class="hero">
     <span class="eyebrow">Les fondamentaux de la cybersécurité</span>
     <h1>Labs interactifs</h1>
-    <p>Retrouvez ici l'ensemble des exercices ludiques du programme. Chaque lab fonctionne sur téléphone, sans installation — il suffit de scanner le QR code partagé par votre formateur.</p>
+    <p>Retrouvez ici l'ensemble des exercices ludiques du programme, classés par module. Chaque lab fonctionne sur téléphone, sans installation — il suffit de scanner le QR code partagé par votre formateur.</p>
   </div>
-  <div class="wrap">
-    <div class="lab-list">
-      <a class="lab-card" href="./module1-traqueur-exposition/">
-        <div class="lab-num">01</div>
-        <div style="flex:1;">
-          <div class="lab-title">Traqueur d'Exposition</div>
-          <div class="lab-sub">Module 1 — Identifier ses informations sensibles</div>
+  <div class="wrap" id="modules-wrap">
+    <!-- Généré par le script ci-dessous à partir de MODULES_DATA -->
+  </div>
+
+<script>
+// ============================================================================
+// Pour ajouter un nouveau lab : ajoutez une ligne dans "labs" du module
+// concerné ci-dessous. Pour un nouveau module sans lab pour l'instant, il
+// suffit de laisser "labs: []" — la carte du module s'affiche automatiquement
+// en gris avec la mention "Aucun lab publié pour ce module".
+// ============================================================================
+const MODULES_DATA = [
+  {
+    num: 1, title: "Introduction à la cybersécurité",
+    labs: [
+      { icon: "🔍", title: "Traqueur d'Exposition", sub: "Identifier ses informations sensibles", href: "./module1-traqueur-exposition/" },
+      { icon: "🎯", title: "Radar des Menaces", sub: "Reconnaître les grandes catégories de cybermenaces", href: "./module1-radar-menaces/" },
+      { icon: "🗺️", title: "Cartographie d'Impact", sub: "Évaluer l'impact potentiel d'un incident", href: "./module1-cartographie-impact/" },
+    ],
+  },
+  { num: 2, title: "Notions fondamentales", labs: [] },
+  { num: 3, title: "Panorama des malwares", labs: [] },
+  { num: 4, title: "Attaques Web, emails & ingénierie sociale", labs: [] },
+  { num: 5, title: "Identités & accès", labs: [] },
+  { num: 6, title: "Sécurité mobile, Wi-Fi & télétravail", labs: [] },
+  { num: 7, title: "Sauvegardes, Cloud & données personnelles", labs: [] },
+  { num: 8, title: "Cybersécurité en entreprise & gestion des incidents", labs: [] },
+  { num: 9, title: "Cadres normatifs & métiers de la cybersécurité", labs: [] },
+  { num: 10, title: "Tendances actuelles & plan d'action personnel", labs: [] },
+];
+
+function render() {
+  const wrap = document.getElementById("modules-wrap");
+  wrap.innerHTML = MODULES_DATA.map((m) => {
+    const isEmpty = m.labs.length === 0;
+    const rows = isEmpty
+      ? `<div class="empty-row">Aucun lab publié pour ce module pour le moment.</div>`
+      : m.labs
+          .map(
+            (l) => `
+        <a class="lab-row" href="${l.href}">
+          <div class="lab-icon">${l.icon}</div>
+          <div>
+            <div class="lab-title">${l.title}</div>
+            <div class="lab-sub">${l.sub}</div>
+          </div>
+          <div class="lab-arrow">→</div>
+        </a>`
+          )
+          .join("");
+    return `
+      <div class="module-group ${isEmpty ? "is-empty" : ""}">
+        <div class="module-header">
+          <div class="module-num">${String(m.num).padStart(2, "0")}</div>
+          <div class="module-title">Module ${m.num} — ${m.title}</div>
+          <div class="module-count">${m.labs.length} lab${m.labs.length !== 1 ? "s" : ""}</div>
         </div>
-        <div class="lab-status status-live">Disponible</div>
-      </a>
-      <a class="lab-card" href="./module1-radar-menaces/">
-        <div class="lab-num">02</div>
-        <div style="flex:1;">
-          <div class="lab-title">Radar des Menaces</div>
-          <div class="lab-sub">Module 1 — Reconnaître les grandes catégories de cybermenaces</div>
-        </div>
-        <div class="lab-status status-live">Disponible</div>
-      </a>
-      <!--
-        Les prochains labs suivent le même modèle : dupliquez un dossier de lab
-        existant, changez window.LAB_ID dans son index.html, et ajoutez une
-        carte ici. Aucune autre configuration Firebase n'est nécessaire.
-      -->
-      <div class="lab-card" style="opacity:.55; cursor:default;">
-        <div class="lab-num" style="background:#D8D2C0; color:#fff;">03</div>
-        <div style="flex:1;">
-          <div class="lab-title">Prochain lab</div>
-          <div class="lab-sub">Sera ajouté ici au fil du programme</div>
-        </div>
-        <div class="lab-status status-soon">À venir</div>
-      </div>
-    </div>
+        <div class="lab-list">${rows}</div>
+      </div>`;
+  }).join("");
+}
+render();
+</script>
+
+  <div class="wrap" style="padding-top:0;">
     <p class="footer-note">
       Cette page et l'ensemble des labs sont hébergés gratuitement sur GitHub Pages.<br>
       Les réponses des participants sont stockées de façon anonymisée dans une base Firebase dédiée à ce programme.
