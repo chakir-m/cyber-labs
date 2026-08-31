@@ -176,6 +176,8 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 1 (quiz origine/intention)
 ├── module1-cartographie-impact/
 │   └── ...                             ← Lab 3 du Module 1 (sélection + classification + duel)
-└── module2-radar-cia/
-    └── ...                             ← Lab 1 du Module 2 (quiz de classification C/I/A, multi-sélection)
+├── module2-radar-cia/
+│   └── ...                             ← Lab 1 du Module 2 (quiz de classification C/I/A, multi-sélection)
+└── module2-grille-risque/
+    └── ...                             ← Lab 2 du Module 2 (estimation M×V×I + classement par priorité)
 ```
