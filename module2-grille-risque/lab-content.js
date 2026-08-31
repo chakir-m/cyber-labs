@@ -185,14 +185,20 @@ window.LabConfig = {
 
 /* ============ Étape 1 : estimation M/V/I par scénario ============ */
 function factorRow(label, name) {
+  const opts = [
+    { lvl: 1, txt: "FAIBLE (1)" },
+    { lvl: 2, txt: "MOYEN (2)" },
+    { lvl: 3, txt: "ÉLEVÉ (3)" },
+  ];
+  const btnsHtml = opts
+    .map(
+      (o) => `<button class="toggle-btn factor-btn" data-lvl="${o.lvl}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">${o.txt}</button>`
+    )
+    .join("");
   return `
     <div style="margin-bottom:16px;">
       <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray);">${label}</span>
-      <div class="sens-row" id="row-${name}">
-        <button class="sens-btn" data-lvl="1">FAIBLE (1)</button>
-        <button class="sens-btn" data-lvl="2">MOYEN (2)</button>
-        <button class="sens-btn" data-lvl="3">ÉLEVÉ (3)</button>
-      </div>
+      <div class="toggle-row" id="row-${name}" style="margin-bottom:0;">${btnsHtml}</div>
     </div>`;
 }
 
@@ -216,10 +222,15 @@ function renderEstimateScreen(container) {
 
   const chosen = { m: null, v: null, i: null };
   ["m", "v", "i"].forEach((name) => {
-    container.querySelectorAll(`#row-${name} .sens-btn`).forEach((b) => {
+    container.querySelectorAll(`#row-${name} .factor-btn`).forEach((b) => {
       b.onclick = () => {
         chosen[name] = parseInt(b.dataset.lvl, 10);
-        container.querySelectorAll(`#row-${name} .sens-btn`).forEach((x) => x.classList.toggle("active", x === b));
+        container.querySelectorAll(`#row-${name} .factor-btn`).forEach((x) => {
+          const active = x === b;
+          x.style.background = active ? "var(--navy)" : "var(--paper)";
+          x.style.color = active ? "#fff" : "var(--navy)";
+          x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
+        });
         document.getElementById("validate-btn").disabled = !(chosen.m && chosen.v && chosen.i);
       };
     });
@@ -234,7 +245,7 @@ function renderEstimateScreen(container) {
     estimateResults.push({ id: s.id, m: chosen.m, v: chosen.v, i: chosen.i, score, tier, tierMatch });
 
     document.getElementById("validate-btn").classList.add("hidden");
-    container.querySelectorAll(".sens-btn").forEach((b) => (b.disabled = true));
+    container.querySelectorAll(".factor-btn").forEach((b) => (b.disabled = true));
 
     const zone = document.getElementById("feedback-zone");
     zone.innerHTML = `
