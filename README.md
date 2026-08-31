@@ -169,7 +169,13 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail...)
 │   ├── lab-template.html               ← gabarit HTML à dupliquer pour un nouveau lab
 │   └── lab-content.template.js         ← gabarit commenté du contenu d'un lab
-└── module1-traqueur-exposition/
-    ├── index.html                      ← copie du gabarit, juste LAB_ID + titre changés
-    └── lab-content.js                  ← le contenu propre à CE lab (le jeu, les scores...)
+├── module1-traqueur-exposition/
+│   ├── index.html                      ← copie du gabarit, juste LAB_ID + titre changés
+│   └── lab-content.js                  ← le contenu propre à CE lab (le jeu, les scores...)
+├── module1-radar-menaces/
+│   └── ...                             ← Lab 2 du Module 1 (quiz origine/intention)
+├── module1-cartographie-impact/
+│   └── ...                             ← Lab 3 du Module 1 (sélection + classification + duel)
+└── module2-radar-cia/
+    └── ...                             ← Lab 1 du Module 2 (quiz de classification C/I/A, multi-sélection)
 ```
