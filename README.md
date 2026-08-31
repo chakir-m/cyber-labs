@@ -182,6 +182,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 2 (estimation M×V×I + classement par priorité)
 ├── module3-detective-malwares/
 │   └── ...                             ← Lab 1 du Module 3 (choix unique parmi 8 familles de malwares)
-└── module3-feu-telechargement/
-    └── ...                             ← Lab 2 du Module 3 (évaluation de risque à 3 niveaux, 4 situations)
+├── module3-feu-telechargement/
+│   └── ...                             ← Lab 2 du Module 3 (évaluation de risque à 3 niveaux, 4 situations)
+├── module4-anatomie-phishing/
+│   └── ...                             ← Lab 1 du Module 4 (checklist multi-sélection, signaux vs distracteurs)
+└── module4-technique-ingenierie/
+    └── ...                             ← Lab 2 du Module 4 (choix unique parmi 5 techniques d'ingénierie sociale)
 ```
