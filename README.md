@@ -178,6 +178,8 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 3 du Module 1 (sélection + classification + duel)
 ├── module2-radar-cia/
 │   └── ...                             ← Lab 1 du Module 2 (quiz de classification C/I/A, multi-sélection)
-└── module2-grille-risque/
-    └── ...                             ← Lab 2 du Module 2 (estimation M×V×I + classement par priorité)
+├── module2-grille-risque/
+│   └── ...                             ← Lab 2 du Module 2 (estimation M×V×I + classement par priorité)
+└── module3-detective-malwares/
+    └── ...                             ← Lab 1 du Module 3 (choix unique parmi 8 familles de malwares)
 ```
