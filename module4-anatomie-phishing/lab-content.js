@@ -11,11 +11,11 @@
 
 const EMAIL_TEXT = {
   expediteur: "Support IT <it-support@votre-entreprise-corp.com>",
-  objet: "Action requise — Votre boîte mail sera suspendue dans 2 heures",
-  corps:
-    "Cher collaborateur,\n\nNotre système a détecté un dépassement de votre quota de messagerie. " +
-    "Cliquez ici immédiatement pour valider votre espace de stockage et éviter la suspension de votre compte.\n\n" +
-    "Cordialement,\nLe Support IT",
+  objetMenace: "Votre boîte mail sera suspendue",
+  objetDelai: "dans 2 heures",
+  recu: "Reçu aujourd'hui à 14:32 (mardi)",
+  corpsIntro: "Cher collaborateur,\n\nNotre système a détecté un dépassement de votre quota de messagerie.",
+  corpsAction: "Cliquez ici immédiatement pour valider votre espace de stockage et éviter la suspension de votre compte.",
   lienAffiche: "www.votre-entreprise.com/valider",
   lienReel: "hxxp://secure-mailquota-verify.ru/valider-acces",
 };
@@ -38,8 +38,8 @@ window.LabConfig = {
   title: "Anatomie du Phishing",
   moduleTag: "Module 4 · Lab interactif",
   description:
-    "Un e-mail suspect, huit caractéristiques proposées : à vous de cocher celles qui sont de VRAIS signaux d'alerte. Attention, certaines caractéristiques semblent rassurantes mais ne prouvent rien.",
-  participantPitch: "Examinez un e-mail simulé et identifiez les vrais signaux d'alerte parmi 8 propositions, en 5 minutes.",
+    "Un e-mail suspect à examiner directement : cliquez sur les éléments de l'e-mail lui-même qui constituent, selon vous, de VRAIS signaux d'alerte. Attention, certains éléments semblent rassurants mais ne prouvent rien.",
+  participantPitch: "Examinez un e-mail simulé en cliquant directement dessus pour repérer les vrais signaux d'alerte, en 5 minutes.",
   formateurPitch: "Voyez en direct quels éléments sont le plus souvent mal classés — signal manqué ou fausse alerte.",
   privacyNote: "Aucune donnée personnelle n'est demandée : seule votre sélection parmi les 8 éléments est enregistrée.",
 
@@ -150,46 +150,70 @@ window.LabConfig = {
   ],
 };
 
-/* ============ Écran unique : e-mail simulé + checklist ============ */
-function renderEmailScreen(container) {
-  const itemsHtml = ITEMS.map(
-    (it) => `
-      <button class="toggle-btn item-btn" data-key="${it.key}" style="text-align:left; justify-content:flex-start; background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; padding:12px 14px; flex:none; width:100%; display:block;">
-        <span style="display:inline-block; width:20px;">☐</span> ${LabEngine.escapeHtml(it.label)}
-      </button>`
-  ).join("");
+/* ============ Écran unique : e-mail interactif à zones cliquables ============ */
+function hotspot(key, innerHtml) {
+  return `<span class="email-hotspot" data-key="${key}">${innerHtml}</span>`;
+}
 
+function renderEmailScreen(container) {
   container.innerHTML = `
     <div class="card-shell fade-in" style="max-width:560px; margin:0 auto;">
       <span class="eyebrow">L'e-mail reçu</span>
-      <div style="background:var(--paper); border:1.5px solid #DCD7C8; border-radius:12px; padding:16px 18px; margin:12px 0 20px; font-size:13px; line-height:1.6;">
-        <div><strong>De :</strong> ${LabEngine.escapeHtml(EMAIL_TEXT.expediteur)}</div>
-        <div><strong>Objet :</strong> ${LabEngine.escapeHtml(EMAIL_TEXT.objet)}</div>
-        <div style="margin-top:10px; white-space:pre-line;">${LabEngine.escapeHtml(EMAIL_TEXT.corps)}</div>
-        <div style="margin-top:10px;"><strong>Lien affiché :</strong> ${LabEngine.escapeHtml(EMAIL_TEXT.lienAffiche)}<br><strong>Lien réel (au survol) :</strong> <span style="color:var(--high); font-family:var(--mono); font-size:11.5px;">${LabEngine.escapeHtml(EMAIL_TEXT.lienReel)}</span></div>
+      <p class="desc" style="margin:6px 0 16px;">Cliquez directement sur les éléments de l'e-mail ci-dessous qui constituent, selon vous, de <strong>VRAIS signaux d'alerte</strong>. Un élément peut sembler rassurant sans en être un.</p>
+
+      <div class="email-window" style="border:1.5px solid #DCD7C8; border-radius:12px; overflow:hidden; font-size:13px; line-height:1.6; margin-bottom:20px;">
+        <div class="email-topbar" style="background:var(--navy); color:#fff; padding:10px 16px; display:flex; align-items:center; gap:10px;">
+          ${hotspot("logo", `<span style="font-family:var(--serif); font-weight:600; font-size:13.5px; cursor:pointer; border-radius:6px; padding:3px 8px;">🏢 Votre-Entreprise — Communication interne</span>`)}
+        </div>
+        <div style="background:#fff; padding:16px 18px;">
+          <div style="margin-bottom:6px;">
+            <strong>De :</strong> ${hotspot("expediteur", `<span style="font-family:var(--mono); font-size:12px; cursor:pointer; border-radius:4px; padding:2px 5px;">${LabEngine.escapeHtml(EMAIL_TEXT.expediteur)}</span>`)}
+          </div>
+          <div style="margin-bottom:6px;">
+            <strong>Objet :</strong> Action requise — ${hotspot("menace", `<span style="cursor:pointer; border-radius:4px; padding:2px 5px;">${LabEngine.escapeHtml(EMAIL_TEXT.objetMenace)}</span>`)} ${hotspot("delai", `<span style="cursor:pointer; border-radius:4px; padding:2px 5px;">${LabEngine.escapeHtml(EMAIL_TEXT.objetDelai)}</span>`)}
+          </div>
+          <div style="margin-bottom:14px;">
+            ${hotspot("jour", `<span style="font-family:var(--mono); font-size:11px; color:var(--gray); cursor:pointer; border-radius:4px; padding:2px 5px;">🕐 ${LabEngine.escapeHtml(EMAIL_TEXT.recu)}</span>`)}
+          </div>
+          <div style="border-top:1px dashed #E4E0D5; padding-top:12px;">
+            ${hotspot("orthographe", `<span style="cursor:pointer; border-radius:6px; padding:4px 6px; display:inline;">${LabEngine.escapeHtml(EMAIL_TEXT.corpsIntro)} ${LabEngine.escapeHtml(EMAIL_TEXT.corpsAction)}</span>`)}
+          </div>
+          <div style="margin-top:14px; padding:10px 12px; background:var(--paper); border-radius:8px;">
+            <div><strong>Lien affiché :</strong></div>
+            ${hotspot("lien", `<span style="cursor:pointer; border-radius:4px; padding:2px 5px; display:inline-block; margin-top:2px;">${LabEngine.escapeHtml(EMAIL_TEXT.lienAffiche)}</span>`)}
+            <div style="margin-top:6px; font-family:var(--mono); font-size:11px; color:var(--high);">Lien réel (au survol) : ${LabEngine.escapeHtml(EMAIL_TEXT.lienReel)}</div>
+          </div>
+          <div style="margin-top:14px;">
+            Cordialement,<br>
+            ${hotspot("signature", `<span style="cursor:pointer; border-radius:4px; padding:2px 5px;">Le Support IT</span>`)}
+          </div>
+        </div>
       </div>
 
-      <p class="desc">Cochez les éléments ci-dessous qui constituent, selon vous, de <strong>VRAIS signaux d'alerte</strong> :</p>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">${itemsHtml}</div>
+      <p class="desc" style="font-size:12.5px; color:var(--gray);">💡 Astuce : touchez ou survolez chaque zone de l'e-mail — le curseur change pour signaler qu'elle est cliquable.</p>
 
-      <button class="btn-primary" id="validate-btn">Valider ma sélection</button>
+      <button class="btn-primary" id="validate-btn" style="margin-top:16px;">Valider ma sélection</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+
+    <style>
+      .email-hotspot span{ transition: background .15s ease, color .15s ease; }
+      .email-hotspot span:hover{ background:var(--gold-light) !important; }
+      .email-hotspot.selected span{ background:var(--navy) !important; color:#fff !important; }
+      .email-topbar .email-hotspot.selected span{ background:var(--gold) !important; color:var(--navy-dark) !important; }
+    </style>
   `;
 
-  container.querySelectorAll(".item-btn").forEach((b) => {
-    b.onclick = () => {
-      const key = b.dataset.key;
+  chosen = new Set();
+  container.querySelectorAll(".email-hotspot").forEach((el) => {
+    el.onclick = () => {
+      const key = el.dataset.key;
       if (chosen.has(key)) {
         chosen.delete(key);
-        b.style.background = "var(--paper)";
-        b.style.color = "var(--navy)";
-        b.querySelector("span").textContent = "☐";
+        el.classList.remove("selected");
       } else {
         chosen.add(key);
-        b.style.background = "var(--navy)";
-        b.style.color = "#fff";
-        b.querySelector("span").textContent = "☑";
+        el.classList.add("selected");
       }
     };
   });
@@ -207,7 +231,8 @@ function finishGame(container) {
   });
   const score = details.filter((d) => d.correct).length;
 
-  container.querySelectorAll(".item-btn, #validate-btn").forEach((b) => (b.disabled = true));
+  container.querySelectorAll(".email-hotspot").forEach((el) => { el.onclick = null; el.style.pointerEvents = "none"; });
+  document.getElementById("validate-btn").disabled = true;
   const zone = document.getElementById("feedback-zone");
   const explHtml = ITEMS.map((it) => {
     const d = details.find((x) => x.key === it.key);

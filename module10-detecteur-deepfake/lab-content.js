@@ -26,8 +26,8 @@ window.LabConfig = {
   title: "Détecteur de Deepfake",
   moduleTag: "Module 10 · Lab interactif",
   description:
-    "Un appel vidéo suspect, six caractéristiques proposées : cochez celles qui sont de VRAIS signaux d'alerte face à un deepfake potentiel. Une voix ou une image convaincante ne prouve plus rien à elle seule.",
-  participantPitch: "Examinez un appel vidéo simulé et identifiez les vrais signaux d'alerte parmi 6 propositions, en 5 minutes.",
+    "Un appel vidéo à examiner directement : cliquez sur les éléments de la visioconférence elle-même qui constituent, selon vous, de VRAIS signaux d'alerte face à un deepfake potentiel. Une voix ou une image convaincante ne prouve plus rien à elle seule.",
+  participantPitch: "Examinez un appel vidéo simulé en cliquant directement sur ses éléments pour repérer les vrais signaux d'alerte, en 5 minutes.",
   formateurPitch: "Voyez en direct quels éléments sont le plus souvent mal classés — signal manqué ou fausse assurance.",
   privacyNote: "Aucune donnée personnelle n'est demandée : seule votre sélection parmi les 6 éléments est enregistrée.",
 
@@ -138,43 +138,68 @@ window.LabConfig = {
   ],
 };
 
-/* ============ Écran unique : appel simulé + checklist ============ */
-function renderCallScreen(container) {
-  const itemsHtml = ITEMS.map(
-    (it) => `
-      <button class="toggle-btn item-btn" data-key="${it.key}" style="text-align:left; justify-content:flex-start; background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; padding:12px 14px; flex:none; width:100%; display:block;">
-        <span style="display:inline-block; width:20px;">☐</span> ${LabEngine.escapeHtml(it.label)}
-      </button>`
-  ).join("");
+/* ============ Écran unique : visio interactive à zones cliquables ============ */
+function hotspot(key, innerHtml, extraStyle) {
+  return `<span class="call-hotspot" data-key="${key}" style="${extraStyle || ""}">${innerHtml}</span>`;
+}
 
+function renderCallScreen(container) {
   container.innerHTML = `
     <div class="card-shell fade-in" style="max-width:560px; margin:0 auto;">
       <span class="eyebrow">L'appel vidéo</span>
-      <div style="background:var(--paper); border:1.5px solid #DCD7C8; border-radius:12px; padding:16px 18px; margin:12px 0 20px; font-size:13.5px; line-height:1.6; color:var(--ink);">
-        ${LabEngine.escapeHtml(CALL_TEXT)}
+      <p class="desc" style="margin:6px 0 16px;">Cliquez directement sur les éléments de cette visioconférence qui constituent, selon vous, de <strong>VRAIS signaux d'alerte</strong>. Un élément peut sembler rassurant sans en être un.</p>
+
+      <div class="video-frame" style="position:relative; border-radius:14px; overflow:hidden; background:linear-gradient(90deg, rgba(255,196,120,.35) 0%, rgba(30,39,97,.9) 45%, rgba(120,170,255,.35) 100%), var(--navy-dark); height:230px; margin-bottom:14px;">
+        ${hotspot("eclairage", `<span style="cursor:pointer; display:block; width:100%; height:100%;" title="Éclairage du visage"></span>`, "position:absolute; inset:0; z-index:1;")}
+
+        ${hotspot("camera", `<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,.35); color:#fff; font-family:var(--mono); font-size:10.5px; padding:4px 9px; border-radius:20px; cursor:pointer;">🔴 EN DIRECT</span>`, "position:absolute; top:10px; left:10px; z-index:2;")}
+
+        <!-- Visage stylisé -->
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-52%); text-align:center; z-index:1; pointer-events:none;">
+          <div style="position:relative; width:96px; height:96px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #F0C9A0, #D9A876); margin:0 auto; box-shadow:0 6px 18px rgba(0,0,0,.3);">
+            <div style="position:absolute; top:38px; left:24px; width:9px; height:9px; border-radius:50%; background:#3A2A20;"></div>
+            <div style="position:absolute; top:38px; right:24px; width:9px; height:9px; border-radius:50%; background:#3A2A20;"></div>
+            <div style="position:absolute; bottom:26px; left:50%; transform:translateX(-50%); width:26px; height:10px; border-radius:0 0 14px 14px; background:#B5714E;"></div>
+          </div>
+          <div style="color:var(--ice); font-size:11px; font-family:var(--mono); margin-top:8px;">Directeur Financier</div>
+        </div>
+
+        ${hotspot("tete", `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,.35); color:var(--gold-light); font-size:13px; cursor:pointer;">↻</span>`, "position:absolute; top:36px; right:calc(50% - 78px); z-index:2;")}
+
+        ${hotspot("voix", `<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,.35); color:#fff; font-family:var(--mono); font-size:10.5px; padding:4px 9px; border-radius:20px; cursor:pointer;">🔊 Voix reconnaissable</span>`, "position:absolute; bottom:10px; left:10px; z-index:2;")}
+
+        ${hotspot("details", `<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,.35); color:#fff; font-family:var(--mono); font-size:10px; padding:4px 8px; border-radius:20px; cursor:pointer;">💬 Détails projet</span>`, "position:absolute; top:10px; right:10px; z-index:2;")}
       </div>
 
-      <p class="desc">Cochez les éléments ci-dessous qui constituent, selon vous, de <strong>VRAIS signaux d'alerte</strong> :</p>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">${itemsHtml}</div>
+      ${hotspot("urgence", `<div style="background:var(--paper); border:1.5px solid #DCD7C8; border-radius:10px; padding:12px 14px; cursor:pointer; font-size:13px; color:var(--ink); line-height:1.5;">🗨️ « J'ai besoin que vous traitiez un <strong>virement urgent et confidentiel</strong> avant la fin de la journée, sans en parler à l'équipe pour l'instant. »</div>`, "display:block; margin-bottom:20px;")}
 
-      <button class="btn-primary" id="validate-btn">Valider ma sélection</button>
+      <p class="desc" style="font-size:12.5px; color:var(--gray);">💡 Astuce : touchez ou survolez chaque zone de l'appel — le curseur change pour signaler qu'elle est cliquable. La zone « visage » couvre tout l'éclairage de l'image.</p>
+
+      <button class="btn-primary" id="validate-btn" style="margin-top:16px;">Valider ma sélection</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+
+    <style>
+      .call-hotspot[data-key="eclairage"] span{ transition: box-shadow .15s ease; }
+      .call-hotspot[data-key="eclairage"].selected span{ box-shadow: inset 0 0 0 3px var(--gold); background:rgba(201,162,75,.15); }
+      .call-hotspot[data-key="tete"] span, .call-hotspot[data-key="camera"] span, .call-hotspot[data-key="voix"] span, .call-hotspot[data-key="details"] span{ transition: background .15s ease, color .15s ease; }
+      .call-hotspot[data-key="tete"].selected span, .call-hotspot[data-key="camera"].selected span, .call-hotspot[data-key="voix"].selected span, .call-hotspot[data-key="details"].selected span{ background:var(--gold) !important; color:var(--navy-dark) !important; }
+      .call-hotspot[data-key="urgence"] > div{ transition: background .15s ease, border-color .15s ease; }
+      .call-hotspot[data-key="urgence"].selected > div{ background:var(--navy) !important; color:#fff !important; border-color:var(--navy) !important; }
+    </style>
   `;
 
-  container.querySelectorAll(".item-btn").forEach((b) => {
-    b.onclick = () => {
-      const key = b.dataset.key;
+  chosen = new Set();
+  container.querySelectorAll(".call-hotspot").forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const key = el.dataset.key;
       if (chosen.has(key)) {
         chosen.delete(key);
-        b.style.background = "var(--paper)";
-        b.style.color = "var(--navy)";
-        b.querySelector("span").textContent = "☐";
+        el.classList.remove("selected");
       } else {
         chosen.add(key);
-        b.style.background = "var(--navy)";
-        b.style.color = "#fff";
-        b.querySelector("span").textContent = "☑";
+        el.classList.add("selected");
       }
     };
   });
@@ -192,7 +217,8 @@ function finishGame(container) {
   });
   const score = details.filter((d) => d.correct).length;
 
-  container.querySelectorAll(".item-btn, #validate-btn").forEach((b) => (b.disabled = true));
+  container.querySelectorAll(".call-hotspot").forEach((el) => { el.onclick = null; el.style.pointerEvents = "none"; });
+  document.getElementById("validate-btn").disabled = true;
   const zone = document.getElementById("feedback-zone");
   const explHtml = ITEMS.map((it) => {
     const d = details.find((x) => x.key === it.key);
