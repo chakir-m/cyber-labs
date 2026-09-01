@@ -198,6 +198,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 6 (évaluation de risque à 3 niveaux, 4 situations)
 ├── module7-verificateur-321/
 │   └── ...                             ← Lab 1 du Module 7 (checklist multi-sélection, 3 dispositifs × 3 critères)
-└── module7-feu-partage-cloud/
-    └── ...                             ← Lab 2 du Module 7 (évaluation de risque à 3 niveaux, 4 situations)
+├── module7-feu-partage-cloud/
+│   └── ...                             ← Lab 2 du Module 7 (évaluation de risque à 3 niveaux, 4 situations)
+├── module8-cycle-incident/
+│   └── ...                             ← Lab 1 du Module 8 (association de 6 actions aux 5 étapes du cycle d'incident)
+└── module8-gravite-incident/
+    └── ...                             ← Lab 2 du Module 8 (classification Mineur/Majeur/Critique, 5 situations)
 ```
