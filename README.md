@@ -124,6 +124,36 @@ vous ne la referez plus jamais, même en ajoutant de nouveaux exercices.
 
 ---
 
+## 3bis. Activer les labs au fur et à mesure (`labs.html`)
+
+Par défaut, **tous les labs sont verrouillés** pour les participants — ils
+apparaissent dans `labs.html` grisés avec la mention « 🔒 Pas encore
+activé », visibles mais non cliquables. C'est volontaire : cela évite qu'un
+participant curieux avance sur un module que vous n'avez pas encore
+présenté.
+
+1. Ouvrir `https://.../nom-du-depot/labs.html`.
+2. Cliquer sur **🔑 Mode formateur** et saisir le mot de passe (le même que
+   pour les tableaux de bord — voir `assets/formateur-auth.js`).
+3. Cliquer sur un module pour le déplier, puis basculer l'interrupteur du
+   lab que vous venez de terminer en cours. Les boutons **Tout activer** /
+   **Tout verrouiller** permettent de traiter un module entier en un clic.
+4. Les participants qui ont déjà `labs.html` ouvert sur leur téléphone
+   voient le changement apparaître automatiquement, sans recharger la page.
+
+Le verrouillage est une double sécurité : même si un participant a
+bookmarké ou reçu directement le lien d'un lab précis, la page du lab
+elle-même refuse de démarrer la partie tant qu'il n'a pas été activé
+(le bouton **Je suis participant** reste grisé). L'accès **formateur**
+reste lui toujours possible sur un lab verrouillé, pour préparer ou tester
+en amont.
+
+La page `labs.html` fonctionne aussi en accordéon : les 10 modules sont
+repliés par défaut (seul l'en-tête est visible) et se déplient
+individuellement au clic, pour ne faire défiler que ce qui vous intéresse.
+
+---
+
 ## 4. Ajouter un prochain lab (architecture à moteur partagé)
 
 Depuis la refonte, chaque lab ne contient plus que **deux fichiers propres à
@@ -166,6 +196,7 @@ lui-même d'exemple complet et fonctionnel à consulter.
 ├── assets/
 │   ├── firebase-config.js              ← configuration Firebase (remplie une fois)
 │   ├── lab-storage.js                  ← couche de stockage (remplace window.storage)
+│   ├── course-lock.js                  ← verrouillage/déverrouillage des labs par le formateur
 │   ├── formateur-auth.js               ← protection par mot de passe du mode formateur
 │   ├── lab-engine.css                  ← styles partagés par tous les labs
 │   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail...)

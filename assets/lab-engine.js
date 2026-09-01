@@ -17,9 +17,61 @@ const LabEngine = (function () {
   let currentRecords = []; // dernier jeu de résultats chargé (pour l'export CSV)
 
   /* ---------------------------------------------------------------------
+   * Verrouillage formateur — bloque l'accès participant si ce lab n'a pas
+   * été explicitement activé (voir assets/course-lock.js). N'affecte jamais
+   * l'accès formateur, qui reste toujours possible pour tester ou gérer.
+   * ------------------------------------------------------------------- */
+  let lockPollTimer = null;
+
+  async function applyLockState() {
+    if (!window.CourseLock || !window.LAB_ID) return; // page sans verrouillage disponible
+    const btn = document.querySelector(".role-card.participant");
+    if (!btn) return;
+
+    let unlocked = true;
+    try {
+      unlocked = await window.CourseLock.isUnlocked(window.LAB_ID);
+    } catch (e) {
+      console.error("[lab-engine] Vérification du verrouillage impossible :", e);
+      return; // en cas d'erreur réseau, on n'affiche pas un lab bloqué par erreur
+    }
+
+    const sub = document.getElementById("participant-pitch");
+    if (!unlocked) {
+      btn.classList.add("locked");
+      btn.setAttribute("aria-disabled", "true");
+      if (sub) {
+        sub.dataset.original = sub.dataset.original || sub.textContent;
+        sub.textContent = "🔒 Ce lab n'est pas encore activé par votre formateur.";
+      }
+    } else {
+      btn.classList.remove("locked");
+      btn.removeAttribute("aria-disabled");
+      if (sub && sub.dataset.original) sub.textContent = sub.dataset.original;
+    }
+  }
+
+  function startLockPolling() {
+    applyLockState();
+    if (lockPollTimer) clearInterval(lockPollTimer);
+    lockPollTimer = setInterval(() => {
+      const landingVisible = document.getElementById("view-landing") && !document.getElementById("view-landing").classList.contains("hidden");
+      if (landingVisible) applyLockState();
+      else { clearInterval(lockPollTimer); lockPollTimer = null; }
+    }, 6000);
+  }
+
+  /* ---------------------------------------------------------------------
    * Navigation entre les grands écrans de l'application
    * ------------------------------------------------------------------- */
   function goTo(view) {
+    if (view === "pseudo") {
+      const btn = document.querySelector(".role-card.participant");
+      if (btn && btn.classList.contains("locked")) {
+        alert("Ce lab n'est pas encore activé par votre formateur. Revenez-y un peu plus tard.");
+        return;
+      }
+    }
     ["landing", "pseudo", "game", "summary", "dash", "detail"].forEach((v) => {
       const el = document.getElementById("view-" + v);
       if (el) el.classList.toggle("hidden", v !== view);
@@ -338,6 +390,8 @@ const LabEngine = (function () {
 
     const handledDetail = await initDetailViewIfNeeded();
     if (handledDetail) return;
+
+    startLockPolling();
   }
 
   return {

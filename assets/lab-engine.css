@@ -79,6 +79,9 @@
   }
   .role-card:hover{border-color:var(--gold); transform:translateY(-2px); box-shadow:0 10px 24px rgba(30,39,97,.08);}
   .role-card:focus-visible{outline:3px solid var(--navy); outline-offset:2px;}
+  .role-card.locked{opacity:.5; cursor:not-allowed; background:#F3F1EC;}
+  .role-card.locked:hover{border-color:#E4E0D5; transform:none; box-shadow:none;}
+  .role-card.locked .role-glyph{background:var(--gray) !important;}
   .role-glyph{
     flex:none; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-family:var(--serif); font-size:20px; font-weight:600; color:#fff;
