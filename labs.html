@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Labs interactifs — Les Fondamentaux de la Cybersécurité</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --ice:#CADCFC;
+    --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  .hero{
+    background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
+    color:#fff; padding:60px 24px 50px; text-align:center;
+  }
+  .hero .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); font-weight:600;}
+  .hero h1{font-family:var(--serif); font-size:clamp(28px,5vw,42px); font-weight:700; margin:14px 0 10px;}
+  .hero p{color:var(--ice); font-size:15px; max-width:36em; margin:0 auto;}
+
+  .wrap{max-width:820px; margin:0 auto; padding:40px 20px 80px;}
+
+  .module-group{margin-bottom:34px;}
+  .module-header{
+    display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:12px 12px 0 0;
+    background:var(--navy); color:#fff;
+  }
+  .module-header .module-num{
+    flex:none; width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,.12);
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:14px; color:var(--gold);
+  }
+  .module-header .module-title{font-family:var(--serif); font-weight:600; font-size:17.5px;}
+  .module-header .module-count{
+    margin-left:auto; font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; color:var(--ice);
+    background:rgba(255,255,255,.1); padding:4px 10px; border-radius:20px; white-space:nowrap;
+  }
+  .module-group.is-empty .module-header{background:#DCD7C8; color:var(--gray);}
+  .module-group.is-empty .module-header .module-num{background:rgba(255,255,255,.4); color:var(--gray);}
+  .module-group.is-empty .module-header .module-count{background:rgba(255,255,255,.3); color:var(--gray);}
+
+  .lab-list{
+    display:flex; flex-direction:column; background:#fff; border:1.5px solid #E4E0D5; border-top:none;
+    border-radius:0 0 12px 12px; overflow:hidden;
+  }
+  .lab-row{
+    display:flex; align-items:center; gap:14px; padding:16px 18px; text-decoration:none; color:inherit;
+    border-bottom:1px solid #EDEAE0; transition:background .15s ease;
+  }
+  .lab-row:last-child{border-bottom:none;}
+  .lab-row:hover{background:var(--paper);}
+  .lab-icon{
+    flex:none; width:34px; height:34px; border-radius:8px; background:var(--gold); color:var(--navy-dark);
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .lab-title{font-weight:600; font-size:14.5px; color:var(--navy);}
+  .lab-sub{font-size:12px; color:var(--gray); margin-top:2px;}
+  .lab-arrow{margin-left:auto; color:var(--gray); font-family:var(--mono); font-size:14px; flex:none;}
+  .empty-row{padding:16px 18px; font-size:13px; color:var(--gray); font-style:italic;}
+
+  .footer-note{margin-top:40px; font-size:12.5px; color:var(--gray); line-height:1.6; text-align:center;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <a href="./index.html" style="display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:rgba(255,255,255,.6); text-decoration:none; margin-bottom:16px; letter-spacing:.04em;">← Retour à l'accueil</a>
+    <span class="eyebrow">Les fondamentaux de la cybersécurité</span>
+    <h1>Labs interactifs</h1>
+    <p>Retrouvez ici l'ensemble des exercices ludiques du programme, classés par module. Chaque lab fonctionne sur téléphone, sans installation — il suffit de scanner le QR code partagé par votre formateur.</p>
+  </div>
+  <div class="wrap" id="modules-wrap">
+    <!-- Généré par le script ci-dessous à partir de MODULES_DATA -->
+  </div>
+
+<script>
+// ============================================================================
+// Pour ajouter un nouveau lab : ajoutez une ligne dans "labs" du module
+// concerné ci-dessous. Pour un nouveau module sans lab pour l'instant, il
+// suffit de laisser "labs: []" — la carte du module s'affiche automatiquement
+// en gris avec la mention "Aucun lab publié pour ce module".
+// ============================================================================
+const MODULES_DATA = [
+  {
+    num: 1, title: "Introduction à la cybersécurité",
+    labs: [
+      { icon: "🔍", title: "Traqueur d'Exposition", sub: "Identifier ses informations sensibles", href: "./module1-traqueur-exposition/" },
+      { icon: "🎯", title: "Radar des Menaces", sub: "Reconnaître les grandes catégories de cybermenaces", href: "./module1-radar-menaces/" },
+      { icon: "🗺️", title: "Cartographie d'Impact", sub: "Évaluer l'impact potentiel d'un incident", href: "./module1-cartographie-impact/" },
+    ],
+  },
+  {
+    num: 2, title: "Notions fondamentales",
+    labs: [
+      { icon: "🧭", title: "Radar CIA", sub: "Classer des incidents selon la triade Confidentialité/Intégrité/Disponibilité", href: "./module2-radar-cia/" },
+      { icon: "⚖️", title: "Grille de Risque", sub: "Estimer Menace × Vulnérabilité × Impact et prioriser 3 scénarios", href: "./module2-grille-risque/" },
+    ],
+  },
+  {
+    num: 3, title: "Panorama des malwares",
+    labs: [
+      { icon: "🕵️", title: "Détective des Malwares", sub: "Identifier la bonne famille de malware parmi 8 (virus, ver, botnet, rootkit...)", href: "./module3-detective-malwares/" },
+      { icon: "🚦", title: "Feu Rouge du Téléchargement", sub: "Évaluer le niveau de risque de 4 demandes de téléchargement", href: "./module3-feu-telechargement/" },
+    ],
+  },
+  {
+    num: 4, title: "Attaques Web, emails & ingénierie sociale",
+    labs: [
+      { icon: "🎣", title: "Anatomie du Phishing", sub: "Repérer les vrais signaux d'alerte d'un e-mail suspect (et éviter les faux)", href: "./module4-anatomie-phishing/" },
+      { icon: "🎭", title: "Techniques d'Ingénierie Sociale", sub: "Reconnaître vishing, baiting, pretexting, smishing et quishing", href: "./module4-technique-ingenierie/" },
+    ],
+  },
+  {
+    num: 5, title: "Identités & accès",
+    labs: [
+      { icon: "🔐", title: "Coffre-Fort des Mots de Passe", sub: "Évaluer la robustesse de 4 mots de passe sur une échelle à 4 niveaux", href: "./module5-coffre-mots-passe/" },
+      { icon: "📡", title: "Signal ou Bruit", sub: "Détecter un vrai signe de compromission de compte, sans fausse alerte", href: "./module5-signal-compromission/" },
+    ],
+  },
+  {
+    num: 6, title: "Sécurité mobile, Wi-Fi & télétravail",
+    labs: [
+      { icon: "📶", title: "Faux Point d'Accès", sub: "Trouver le bon réflexe face à des réseaux Wi-Fi publics dans 4 lieux", href: "./module6-faux-point-acces/" },
+      { icon: "🏠", title: "Feu du Télétravail", sub: "Évaluer le niveau de risque de 4 situations à domicile", href: "./module6-feu-teletravail/" },
+    ],
+  },
+  {
+    num: 7, title: "Sauvegardes, Cloud & données personnelles",
+    labs: [
+      { icon: "💾", title: "Vérificateur 3-2-1", sub: "Confronter 3 dispositifs de sauvegarde aux critères de la règle 3-2-1", href: "./module7-verificateur-321/" },
+      { icon: "☁️", title: "Feu du Partage Cloud", sub: "Évaluer le niveau de risque de 4 configurations de partage cloud", href: "./module7-feu-partage-cloud/" },
+    ],
+  },
+  {
+    num: 8, title: "Cybersécurité en entreprise & gestion des incidents",
+    labs: [
+      { icon: "🔄", title: "Cycle de l'Incident", sub: "Associer 6 actions aux 5 étapes du cycle de gestion d'incident", href: "./module8-cycle-incident/" },
+      { icon: "🚨", title: "Niveau de Gravité", sub: "Classer 5 incidents en Mineur, Majeur ou Critique", href: "./module8-gravite-incident/" },
+    ],
+  },
+  {
+    num: 9, title: "Cadres normatifs & métiers de la cybersécurité",
+    labs: [
+      { icon: "⚖️", title: "Qui Fait Quoi", sub: "Associer 6 descriptions au bon texte, à la bonne autorité ou à la bonne norme", href: "./module9-qui-fait-quoi/" },
+      { icon: "🧑‍💻", title: "Métiers de la Cybersécurité", sub: "Associer 4 descriptions de mission au bon métier", href: "./module9-metiers-cyber/" },
+    ],
+  },
+  {
+    num: 10, title: "Tendances actuelles & plan d'action personnel",
+    labs: [
+      { icon: "🎭", title: "Détecteur de Deepfake", sub: "Repérer les vrais signaux d'alerte d'un appel vidéo suspect (et éviter les faux)", href: "./module10-detecteur-deepfake/" },
+      { icon: "📡", title: "Feu des Objets Connectés", sub: "Évaluer le niveau de risque de 4 objets connectés", href: "./module10-feu-objets-connectes/" },
+    ],
+  },
+];
+
+function render() {
+  const wrap = document.getElementById("modules-wrap");
+  wrap.innerHTML = MODULES_DATA.map((m) => {
+    const isEmpty = m.labs.length === 0;
+    const rows = isEmpty
+      ? `<div class="empty-row">Aucun lab publié pour ce module pour le moment.</div>`
+      : m.labs
+          .map(
+            (l) => `
+        <a class="lab-row" href="${l.href}">
+          <div class="lab-icon">${l.icon}</div>
+          <div>
+            <div class="lab-title">${l.title}</div>
+            <div class="lab-sub">${l.sub}</div>
+          </div>
+          <div class="lab-arrow">→</div>
+        </a>`
+          )
+          .join("");
+    return `
+      <div class="module-group ${isEmpty ? "is-empty" : ""}">
+        <div class="module-header">
+          <div class="module-num">${String(m.num).padStart(2, "0")}</div>
+          <div class="module-title">Module ${m.num} — ${m.title}</div>
+          <div class="module-count">${m.labs.length} lab${m.labs.length !== 1 ? "s" : ""}</div>
+        </div>
+        <div class="lab-list">${rows}</div>
+      </div>`;
+  }).join("");
+}
+render();
+</script>
+
+  <div class="wrap" style="padding-top:0;">
+    <p class="footer-note">
+      Cette page et l'ensemble des labs sont hébergés gratuitement sur GitHub Pages.<br>
+      Les réponses des participants sont stockées de façon anonymisée dans une base Firebase dédiée à ce programme.
+    </p>
+  </div>
+</body>
+</html>

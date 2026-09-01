@@ -160,9 +160,9 @@ lui-même d'exemple complet et fonctionnel à consulter.
 
 ```
 /
-├── landing.html                        ← page de présentation marketing de la formation 2 jours
+├── index.html                          ← page d'accueil PAR DÉFAUT (présentation de la formation 2 jours)
 ├── programme.html                      ← plaquette détaillée du programme (planning J1/J2, tableau des labs)
-├── index.html                          ← page d'accueil listant tous les labs
+├── labs.html                           ← hub listant tous les labs, classés par module
 ├── assets/
 │   ├── firebase-config.js              ← configuration Firebase (remplie une fois)
 │   ├── lab-storage.js                  ← couche de stockage (remplace window.storage)
