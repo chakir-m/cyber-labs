@@ -202,6 +202,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 7 (évaluation de risque à 3 niveaux, 4 situations)
 ├── module8-cycle-incident/
 │   └── ...                             ← Lab 1 du Module 8 (association de 6 actions aux 5 étapes du cycle d'incident)
-└── module8-gravite-incident/
-    └── ...                             ← Lab 2 du Module 8 (classification Mineur/Majeur/Critique, 5 situations)
+├── module8-gravite-incident/
+│   └── ...                             ← Lab 2 du Module 8 (classification Mineur/Majeur/Critique, 5 situations)
+├── module9-qui-fait-quoi/
+│   └── ...                             ← Lab 1 du Module 9 (choix unique parmi 8 textes/autorités/normes)
+└── module9-metiers-cyber/
+    └── ...                             ← Lab 2 du Module 9 (choix unique parmi 4 métiers de la cybersécurité)
 ```
