@@ -194,6 +194,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 5 (classification binaire : signal réel ou fausse alerte)
 ├── module6-faux-point-acces/
 │   └── ...                             ← Lab 1 du Module 6 (choix unique, options variables par lieu)
-└── module6-feu-teletravail/
-    └── ...                             ← Lab 2 du Module 6 (évaluation de risque à 3 niveaux, 4 situations)
+├── module6-feu-teletravail/
+│   └── ...                             ← Lab 2 du Module 6 (évaluation de risque à 3 niveaux, 4 situations)
+├── module7-verificateur-321/
+│   └── ...                             ← Lab 1 du Module 7 (checklist multi-sélection, 3 dispositifs × 3 critères)
+└── module7-feu-partage-cloud/
+    └── ...                             ← Lab 2 du Module 7 (évaluation de risque à 3 niveaux, 4 situations)
 ```
