@@ -206,6 +206,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 8 (classification Mineur/Majeur/Critique, 5 situations)
 ├── module9-qui-fait-quoi/
 │   └── ...                             ← Lab 1 du Module 9 (choix unique parmi 8 textes/autorités/normes)
-└── module9-metiers-cyber/
-    └── ...                             ← Lab 2 du Module 9 (choix unique parmi 4 métiers de la cybersécurité)
+├── module9-metiers-cyber/
+│   └── ...                             ← Lab 2 du Module 9 (choix unique parmi 4 métiers de la cybersécurité)
+├── module10-detecteur-deepfake/
+│   └── ...                             ← Lab 1 du Module 10 (checklist multi-sélection, signaux vs distracteurs)
+└── module10-feu-objets-connectes/
+    └── ...                             ← Lab 2 du Module 10 (évaluation de risque à 3 niveaux, 4 situations)
 ```

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Détecteur de Deepfake — Module 10</title>
+<!--
+  ============================================================================
+  GABARIT DE LAB — à dupliquer pour chaque nouveau lab du programme.
+
+  Ce que vous devez changer pour un nouveau lab (et RIEN d'autre dans ce
+  fichier) :
+    1. Le <title> ci-dessus (juste pour l'onglet du navigateur).
+    2. Le chemin "../assets/..." reste identique si le nouveau dossier de lab
+       est au même niveau que "module1-traqueur-exposition/" (un sous-dossier
+       du dépôt).
+    3. Tout en bas de ce fichier : <script src="lab-content.js"></script>
+       doit pointer vers LE FICHIER DE CONTENU DU NOUVEAU LAB (créez-en un
+       nouveau à côté de ce index.html, sur le modèle de
+       "assets/lab-content.template.js").
+    4. Rien d'autre : le titre, le sous-titre, les textes d'accroche, etc.
+       sont tous définis dans lab-content.js, pas ici.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/lab-engine.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== LANDING ===================== -->
+  <div id="view-landing">
+    <div class="landing-hero">
+      <div class="badge-icon"></div>
+      <span class="eyebrow" id="landing-tag" style="color:var(--gold)">Lab interactif</span>
+      <h1 id="landing-title">Titre du lab</h1>
+      <p id="landing-desc"></p>
+      <div class="module-tag">LES FONDAMENTAUX DE LA CYBERSÉCURITÉ — ÉDITION 2026</div>
+    </div>
+    <div class="landing-panel">
+      <span class="eyebrow" style="color:var(--gray)">Choisissez votre rôle</span>
+      <button class="role-card participant" onclick="LabEngine.goTo('pseudo')">
+        <div class="role-glyph">P</div>
+        <div>
+          <div class="role-title">Je suis participant</div>
+          <div class="role-sub" id="participant-pitch"></div>
+        </div>
+      </button>
+      <button class="role-card formateur" onclick="LabEngine.attemptFormateurAccess()">
+        <div class="role-glyph">F</div>
+        <div>
+          <div class="role-title">Je suis formateur</div>
+          <div class="role-sub" id="formateur-pitch"></div>
+        </div>
+      </button>
+      <p class="landing-note" id="landing-note"></p>
+    </div>
+  </div>
+
+  <!-- ===================== PSEUDO ===================== -->
+  <div id="view-pseudo" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Lab</span></div>
+      <button class="link-back" onclick="LabEngine.goTo('landing')">← Retour</button>
+    </div>
+    <div class="center-wrap">
+      <div class="card-shell fade-in">
+        <span class="eyebrow">Avant de commencer</span>
+        <h2>Comment vous appelle-t-on ?</h2>
+        <p class="desc">Un simple prénom ou pseudo suffit — il ne sert qu'à afficher votre résultat personnel à la fin.</p>
+        <input type="text" id="pseudo-input" placeholder="Ex. Salma, ou « Participant 4 »" maxlength="30" autocomplete="off">
+        <button class="btn-primary" id="pseudo-btn" onclick="LabEngine.startGame()" disabled>Commencer →</button>
+        <div class="privacy-note">🔒 Vos réponses restent anonymisées : aucun identifiant réel n'est demandé.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GAME (rempli par lab-content.js) ===================== -->
+  <div id="view-game" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Lab</span></div>
+      <button class="link-back" onclick="if(confirm('Quitter le lab et perdre votre progression ?'))LabEngine.goTo('landing')">Quitter</button>
+    </div>
+    <div class="game-stage">
+      <div id="game-container" style="width:100%;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== SUMMARY (rempli par lab-content.js) ===================== -->
+  <div id="view-summary" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Lab</span></div>
+      <button class="link-back" onclick="LabEngine.goTo('landing')">Terminer</button>
+    </div>
+    <div class="center-wrap">
+      <div id="summary-container" style="width:100%; max-width:520px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <div id="view-dash" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Lab — Formateur</span></div>
+      <button class="link-back" onclick="LabEngine.goTo('landing')">← Retour</button>
+    </div>
+    <div class="dash-wrap">
+      <div class="dash-head">
+        <div>
+          <span class="eyebrow">Tableau de bord en direct</span>
+          <h2>Débrief collectif</h2>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="live-pill"><span class="blip"></span> Actualisation automatique</div>
+          <button class="btn-ghost" style="padding:9px 16px; font-size:12.5px;" onclick="LabEngine.exportCsv()">⬇ Exporter en CSV</button>
+          <button class="btn-ghost" style="padding:9px 16px; font-size:12.5px; color:var(--high); border-color:#E4A9A3;" onclick="LabEngine.resetDatabase()">🗑 Réinitialiser</button>
+        </div>
+      </div>
+
+      <div id="qr-block" class="stat-card" style="display:flex; align-items:center; gap:22px; margin-bottom:26px; flex-wrap:wrap;">
+        <div id="qr-canvas" style="flex:none; width:132px; height:132px; background:#fff; border-radius:10px; padding:8px; border:1px solid #E4E0D5;"></div>
+        <div style="flex:1; min-width:220px;">
+          <div class="section-title" style="margin:0 0 8px;">Faites rejoindre vos participants</div>
+          <p style="font-size:13.5px; color:var(--gray); line-height:1.55; margin-bottom:10px;">
+            Projetez ce QR code ou partagez le lien ci-dessous. Chaque participant choisit « Je suis participant » depuis son propre téléphone.
+          </p>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <code id="qr-url" style="font-family:var(--mono); font-size:12px; background:var(--paper); padding:8px 12px; border-radius:8px; border:1px solid #E4E0D5; word-break:break-all;"></code>
+            <button class="btn-ghost" style="padding:8px 14px; font-size:12.5px;" onclick="LabEngine.copyShareUrl()">Copier le lien</button>
+          </div>
+          <p id="qr-hint" style="font-size:12px; color:var(--gray); margin-top:10px; line-height:1.5;"></p>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><div class="n" id="dash-count">0</div><div class="l">Participants ayant joué</div></div>
+      </div>
+
+      <div id="dash-empty" class="empty-state">
+        <div class="big">En attente des premiers résultats</div>
+        Demandez aux participants de rejoindre depuis leur téléphone et de choisir « Je suis participant ».
+      </div>
+
+      <div id="dash-content" class="hidden">
+        <!-- Zone spécifique au lab (graphiques, agrégats...), remplie par LabConfig.renderDashboardExtra -->
+        <div id="dash-extra"></div>
+
+        <div class="section-title">Résultats par participant</div>
+        <div id="participant-list"></div>
+      </div>
+      <div class="refresh-note" id="refresh-note"></div>
+    </div>
+  </div>
+
+  <!-- ===================== DÉTAIL PARTICIPANT (nouvel onglet, pas de rafraîchissement) ===================== -->
+  <div id="view-detail" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="dot"></span><span>Lab — Détail</span></div>
+      <button class="link-back" onclick="window.close()">Fermer l'onglet</button>
+    </div>
+    <div class="dash-wrap" style="max-width:640px;">
+      <div id="detail-loading" style="padding:60px 0; text-align:center; color:var(--gray);">Chargement du détail…</div>
+      <div id="detail-content" class="hidden">
+        <div class="dash-head" style="margin-bottom:18px;">
+          <div>
+            <span class="eyebrow">Détail individuel</span>
+            <h2 id="detail-name">—</h2>
+          </div>
+        </div>
+        <div id="detail-body"></div>
+      </div>
+      <div id="detail-error" class="hidden empty-state">
+        <div class="big">Détail introuvable</div>
+        Ce résultat a peut-être été supprimé, ou le lien a expiré.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stockage partagé et authentification formateur (communs à tous les labs) -->
+<script>window.LAB_ID = "module10-detecteur-deepfake";</script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="../assets/firebase-config.js"></script>
+<script src="../assets/lab-storage.js"></script>
+<script src="../assets/formateur-auth.js"></script>
+
+<!-- Contenu spécifique à CE lab (le seul fichier vraiment différent d'un lab à l'autre) -->
+<script src="lab-content.js"></script>
+
+<!-- Moteur partagé — chargé en dernier, démarre automatiquement -->
+<script src="../assets/lab-engine.js"></script>
+</body>
+</html>
