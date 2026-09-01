@@ -50,23 +50,31 @@
   window.CourseLock = {
     // Retourne { labId: true, ... } pour chaque lab explicitement déverrouillé.
     // Un lab absent de cet objet est considéré comme VERROUILLÉ par défaut.
+    // En cas d'erreur (règles Firebase mal configurées, réseau...), on
+    // retourne aussi _error:true pour que la page appelante puisse prévenir
+    // le formateur au lieu d'afficher silencieusement tout en gris.
     async getUnlockedMap() {
       try {
         const snap = await db.ref(PATH).get();
         return snap.exists() ? snap.val() : {};
       } catch (e) {
-        console.error("[course-lock] Erreur de lecture, on suppose tout verrouillé :", e);
-        return {};
+        console.error("[course-lock] Erreur de lecture — vérifiez les règles Firebase (chemin 'course/unlocked-labs') :", e);
+        return { _error: true };
       }
     },
 
+    // NB : en cas d'erreur de lecture, on NE verrouille PAS le participant
+    // (fail-open) — un problème technique de configuration ne doit jamais
+    // empêcher un participant d'accéder à un lab. Le verrouillage explicite
+    // (choix du formateur) reste, lui, pleinement respecté quand la lecture
+    // fonctionne normalement.
     async isUnlocked(labId) {
       try {
         const snap = await db.ref(`${PATH}/${sanitizeId(labId)}`).get();
         return snap.exists() ? !!snap.val() : false;
       } catch (e) {
-        console.error("[course-lock] Erreur de lecture pour", labId, e);
-        return false; // en cas de doute, on verrouille (choix prudent)
+        console.error("[course-lock] Erreur de lecture pour", labId, "— accès autorisé par défaut (fail-open) :", e);
+        return true;
       }
     },
 
@@ -80,7 +88,7 @@
         }
         return true;
       } catch (e) {
-        console.error("[course-lock] Erreur d'écriture pour", labId, e);
+        console.error("[course-lock] Erreur d'écriture pour", labId, "— vérifiez les règles Firebase (chemin 'course/unlocked-labs') :", e);
         return false;
       }
     },
@@ -89,7 +97,14 @@
     // immédiatement les changements faits par le formateur depuis un autre
     // appareil, sans que les participants aient besoin de recharger la page.
     onChange(callback) {
-      db.ref(PATH).on("value", (snap) => callback(snap.exists() ? snap.val() : {}));
+      db.ref(PATH).on(
+        "value",
+        (snap) => callback(snap.exists() ? snap.val() : {}),
+        (err) => {
+          console.error("[course-lock] Erreur d'abonnement en direct — vérifiez les règles Firebase :", err);
+          callback({ _error: true });
+        }
+      );
     },
 
     stopListening() {

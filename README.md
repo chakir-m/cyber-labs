@@ -66,10 +66,28 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
              }
            }
          }
+       },
+       "course": {
+         "unlocked-labs": {
+           ".read": true,
+           ".write": true
+         }
        }
      }
    }
    ```
+
+   > **⚠️ Si vous avez créé votre base Firebase avant l'ajout du verrouillage
+   > des labs (section 3bis)**, vos règles actuelles ne contiennent
+   > probablement que le bloc `"labs"` — le bloc `"course"` ci-dessus est
+   > nécessaire pour que l'activation des labs par le formateur fonctionne.
+   > Sans lui, Firebase refuse silencieusement la lecture/écriture sur ce
+   > chemin (erreur `permission_denied` visible dans la console développeur),
+   > et `labs.html` affiche un bandeau rouge d'avertissement pour vous le
+   > signaler. Il suffit de coller les règles complètes ci-dessus (avec les
+   > deux blocs `"labs"` et `"course"`) dans **Realtime Database > Règles**
+   > puis de cliquer **Publier** — aucune autre action nécessaire, l'effet
+   > est immédiat.
 
    > **Note sur la sécurité.** Ces règles sont volontairement ouvertes en
    > lecture/écriture pour rester simples à utiliser en salle de formation,
