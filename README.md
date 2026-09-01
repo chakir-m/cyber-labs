@@ -190,6 +190,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 4 (choix unique parmi 5 techniques d'ingénierie sociale)
 ├── module5-coffre-mots-passe/
 │   └── ...                             ← Lab 1 du Module 5 (robustesse de mots de passe, échelle à 4 niveaux)
-└── module5-signal-compromission/
-    └── ...                             ← Lab 2 du Module 5 (classification binaire : signal réel ou fausse alerte)
+├── module5-signal-compromission/
+│   └── ...                             ← Lab 2 du Module 5 (classification binaire : signal réel ou fausse alerte)
+├── module6-faux-point-acces/
+│   └── ...                             ← Lab 1 du Module 6 (choix unique, options variables par lieu)
+└── module6-feu-teletravail/
+    └── ...                             ← Lab 2 du Module 6 (évaluation de risque à 3 niveaux, 4 situations)
 ```
