@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme détaillé — Les Fondamentaux de la Cybersécurité (2 jours)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3;
+    --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px; margin:0 auto; padding:0 32px;}
+  @media (max-width:700px){ .wrap{padding:0 20px;} }
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); font-weight:600;}
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 32px;
+    background:#fff; border-bottom:1px solid #E4E0D5; position:sticky; top:0; z-index:10;
+  }
+  @media (max-width:700px){ .topbar{padding:14px 20px;} }
+  .topbar .brand{display:flex; align-items:center; gap:10px;}
+  .topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--gold);}
+  .topbar .brand span{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--navy); text-transform:uppercase; font-weight:600;}
+  .link-back{font-family:var(--mono); font-size:11.5px; color:var(--gray); text-decoration:none;}
+  .link-back:hover{color:var(--navy);}
+
+  /* ---------- SLIDE COVER ---------- */
+  .slide-cover{
+    background:radial-gradient(130% 160% at 15% 0%, var(--navy) 0%, var(--navy-dark) 72%);
+    color:#fff; padding:110px 0 90px; text-align:center; position:relative; overflow:hidden;
+  }
+  .slide-cover::after{content:""; position:absolute; left:-90px; top:-90px; width:320px; height:320px; border-radius:50%; border:1.5px solid rgba(201,162,75,.2);}
+  .slide-cover .kicker{color:var(--gold-light); font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin-bottom:22px; position:relative;}
+  .slide-cover h1{font-family:var(--serif); font-weight:600; font-size:clamp(32px,5vw,52px); line-height:1.1; margin-bottom:18px; position:relative;}
+  .slide-cover p{color:var(--ice); font-size:16.5px; max-width:32em; margin:0 auto; line-height:1.6; position:relative;}
+  .slide-cover .badge-row{margin-top:36px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap; position:relative;}
+  .mini-badge{
+    font-family:var(--mono); font-size:11.5px; color:var(--gold-light); border:1px solid rgba(201,162,75,.4);
+    border-radius:20px; padding:7px 16px;
+  }
+
+  /* ---------- SLIDE GENERIC ---------- */
+  .slide{padding:64px 0; border-bottom:1px solid #E4E0D5;}
+  .slide.dark{background:linear-gradient(155deg,var(--navy),var(--navy-dark)); color:#fff; border-bottom:none;}
+  .slide-head{margin-bottom:36px;}
+  .slide-head .eyebrow{display:block; margin-bottom:10px;}
+  .slide.dark .eyebrow{color:var(--gold-light);}
+  .slide-head h2{font-family:var(--serif); font-weight:600; font-size:clamp(24px,3vw,32px); color:var(--navy); line-height:1.2;}
+  .slide.dark .slide-head h2{color:#fff;}
+  .slide-head p{color:var(--gray); font-size:14.5px; margin-top:12px; max-width:56em; line-height:1.6;}
+  .slide.dark .slide-head p{color:var(--ice);}
+
+  /* ---------- PUBLIC / PREREQUIS ---------- */
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:28px;}
+  @media (max-width:700px){ .two-col{grid-template-columns:1fr;} }
+  .info-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:var(--radius); padding:24px 26px;}
+  .info-card h3{font-family:var(--serif); font-size:17px; color:var(--navy); margin-bottom:12px; font-weight:600;}
+  .info-card ul{list-style:none;}
+  .info-card li{font-size:13.5px; color:var(--ink); padding:7px 0; border-bottom:1px solid #EDEAE0; display:flex; gap:10px;}
+  .info-card li:last-child{border-bottom:none;}
+  .info-card li .b{color:var(--gold); flex:none;}
+
+  /* ---------- REPARTITION BAR ---------- */
+  .split-bar{display:flex; height:34px; border-radius:8px; overflow:hidden; margin:20px 0 14px; max-width:560px;}
+  .split-bar .theorie{background:var(--navy); display:flex; align-items:center; justify-content:center; color:#fff; font-family:var(--mono); font-size:12px; font-weight:600;}
+  .split-bar .pratique{background:var(--gold); display:flex; align-items:center; justify-content:center; color:var(--navy-dark); font-family:var(--mono); font-size:12px; font-weight:600;}
+  .split-legend{display:flex; gap:22px; font-size:12.5px; color:var(--gray);}
+  .split-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .split-legend i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+
+  /* ---------- DAY TIMELINE ---------- */
+  .day-block{margin-bottom:30px;}
+  .day-block:last-child{margin-bottom:0;}
+  .day-title{
+    display:flex; align-items:center; gap:14px; margin-bottom:16px;
+  }
+  .day-title .day-chip{
+    font-family:var(--serif); font-size:20px; font-weight:700; color:#fff; background:var(--gold);
+    color:var(--navy-dark); width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .day-title h3{font-family:var(--serif); font-size:20px; color:#fff; font-weight:600;}
+  .day-title .sub{font-size:12.5px; color:var(--ice); font-family:var(--mono);}
+  .slot-row{
+    display:grid; grid-template-columns:120px 1fr; gap:18px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.12);
+  }
+  .slot-row:last-child{border-bottom:none;}
+  .slot-time{font-family:var(--mono); font-size:11.5px; color:var(--gold-light); padding-top:2px;}
+  .slot-content .m-label{font-family:var(--mono); font-size:10.5px; color:var(--gold-light); margin-right:8px;}
+  .slot-content .m-title{font-size:14px; font-weight:600; color:#fff;}
+  .slot-content .m-desc{font-size:12.5px; color:var(--ice); margin-top:4px; line-height:1.5;}
+
+  /* ---------- TABLE MODULES ---------- */
+  .mod-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .mod-table th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gray); padding:10px 14px; border-bottom:2px solid #DCD7C8;
+  }
+  .mod-table td{padding:12px 14px; border-bottom:1px solid #EDEAE0; vertical-align:top;}
+  .mod-table tr:hover td{background:#FBFAF7;}
+  .mod-table .mn{font-family:var(--mono); color:var(--gold); font-weight:700;}
+  .mod-table .labs-cell a{color:var(--navy); font-size:12px; text-decoration:none; display:block; margin-bottom:3px;}
+  .mod-table .labs-cell a:hover{color:var(--gold); text-decoration:underline;}
+
+  /* ---------- CTA ---------- */
+  .cta-block{text-align:center; padding:70px 0 90px;}
+  .cta-block h2{font-family:var(--serif); font-size:clamp(24px,3.4vw,34px); color:var(--navy); margin-bottom:14px; font-weight:600;}
+  .cta-block p{color:var(--gray); font-size:14.5px; margin-bottom:26px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; padding:13px 22px; border-radius:10px;
+    font-weight:600; font-size:14px; text-decoration:none; margin:0 6px;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-ghost{border:1.5px solid #DCD7C8; color:var(--navy);}
+  .btn-ghost:hover{border-color:var(--navy);}
+
+  footer{background:var(--navy-dark); color:rgba(255,255,255,.5); padding:26px 0; font-size:12px; text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><span>Programme — 2 jours</span></div>
+  <a class="link-back" href="./landing.html">← Retour à la présentation</a>
+</div>
+
+<div class="slide-cover">
+  <div class="wrap">
+    <div class="kicker">Les Fondamentaux de la Cybersécurité</div>
+    <h1>Programme détaillé — Variante 2 jours</h1>
+    <p>14 heures de formation, 10 modules, 20 labs interactifs. Conçu pour un public non-technique : managers, RH, juridique, finance, équipes administratives.</p>
+    <div class="badge-row">
+      <div class="mini-badge">14 heures</div>
+      <div class="mini-badge">Groupes de 8 à 20 personnes</div>
+      <div class="mini-badge">Édition 2026</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="wrap">
+    <div class="slide-head">
+      <span class="eyebrow">Cadrage</span>
+      <h2>Public cible, prérequis et objectifs généraux</h2>
+    </div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Public cible</h3>
+        <ul>
+          <li><span class="b">•</span> Managers et cadres non-techniques</li>
+          <li><span class="b">•</span> Ressources humaines, juridique, finance</li>
+          <li><span class="b">•</span> Équipes administratives et support</li>
+          <li><span class="b">•</span> Toute personne utilisant un ordinateur ou un smartphone professionnel</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>Prérequis</h3>
+        <ul>
+          <li><span class="b">•</span> Aucun prérequis technique</li>
+          <li><span class="b">•</span> Utilisation courante d'un ordinateur et d'un smartphone</li>
+          <li><span class="b">•</span> Curiosité et participation active attendues</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="wrap">
+    <div class="slide-head">
+      <span class="eyebrow">Méthodologie</span>
+      <h2>Une pédagogie active, pas un cours magistral</h2>
+      <p>Chaque module alterne apports théoriques courts et mise en pratique immédiate via un lab interactif jouable sur téléphone — la répartition ci-dessous reflète l'équilibre visé sur l'ensemble des deux jours.</p>
+    </div>
+    <div class="split-bar">
+      <div class="theorie" style="width:45%;">45%</div>
+      <div class="pratique" style="width:55%;">55%</div>
+    </div>
+    <div class="split-legend">
+      <span><i style="background:var(--navy);"></i> Apports théoriques & études de cas</span>
+      <span><i style="background:var(--gold);"></i> Labs interactifs & mise en pratique</span>
+    </div>
+  </div>
+</div>
+
+<div class="slide dark">
+  <div class="wrap">
+    <div class="slide-head">
+      <span class="eyebrow">Planning</span>
+      <h2>Journée 1 — Comprendre les menaces & se protéger soi-même</h2>
+    </div>
+    <div class="day-block">
+      <div class="day-title">
+        <div class="day-chip">M</div>
+        <div>
+          <h3>Matinée — 3h30</h3>
+          <div class="sub">Fondations & panorama des menaces</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">09:00 – 10:15</div>
+        <div class="slot-content">
+          <span class="m-label">M1</span><span class="m-title">Introduction à la cybersécurité</span>
+          <div class="m-desc">Pourquoi ça concerne tout le monde, chiffres clés, 3 incidents réels analysés + 1 lab.</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">10:15 – 10:30</div>
+        <div class="slot-content"><span class="m-title">Pause</span></div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">10:30 – 12:00</div>
+        <div class="slot-content">
+          <span class="m-label">M2</span><span class="m-title">Notions fondamentales</span>
+          <div class="m-desc">Triade CIA, actifs informationnels, formule du risque + 2 labs.</div>
+        </div>
+      </div>
+    </div>
+    <div class="day-block">
+      <div class="day-title">
+        <div class="day-chip">A</div>
+        <div>
+          <h3>Après-midi — 3h30</h3>
+          <div class="sub">Malwares, phishing & ingénierie sociale</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">13:30 – 15:00</div>
+        <div class="slot-content">
+          <span class="m-label">M3</span><span class="m-title">Panorama des malwares</span>
+          <div class="m-desc">8 familles de malwares, évaluer le risque d'un téléchargement + 2 labs.</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">15:00 – 15:15</div>
+        <div class="slot-content"><span class="m-title">Pause</span></div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">15:15 – 17:00</div>
+        <div class="slot-content">
+          <span class="m-label">M4 + M5</span><span class="m-title">Ingénierie sociale, puis identités & accès</span>
+          <div class="m-desc">Anatomie du phishing, techniques de manipulation, mots de passe et MFA + 4 labs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide dark">
+  <div class="wrap">
+    <div class="slide-head">
+      <span class="eyebrow">Planning</span>
+      <h2>Journée 2 — Sécuriser son quotidien & anticiper l'avenir</h2>
+    </div>
+    <div class="day-block">
+      <div class="day-title">
+        <div class="day-chip">M</div>
+        <div>
+          <h3>Matinée — 3h30</h3>
+          <div class="sub">Contextes de travail & protection des données</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">09:00 – 10:15</div>
+        <div class="slot-content">
+          <span class="m-label">M6</span><span class="m-title">Sécurité mobile, Wi-Fi & télétravail</span>
+          <div class="m-desc">Faux points d'accès, VPN, cyberhygiène au bureau comme à la maison + 2 labs.</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">10:15 – 10:30</div>
+        <div class="slot-content"><span class="m-title">Pause</span></div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">10:30 – 12:00</div>
+        <div class="slot-content">
+          <span class="m-label">M7</span><span class="m-title">Sauvegardes, Cloud & données personnelles</span>
+          <div class="m-desc">Règle 3-2-1, partage cloud sécurisé, protection des données + 2 labs.</div>
+        </div>
+      </div>
+    </div>
+    <div class="day-block">
+      <div class="day-title">
+        <div class="day-chip">A</div>
+        <div>
+          <h3>Après-midi — 3h30</h3>
+          <div class="sub">Entreprise, cadre normatif, tendances & clôture</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">13:30 – 14:45</div>
+        <div class="slot-content">
+          <span class="m-label">M8</span><span class="m-title">Cybersécurité en entreprise & incidents</span>
+          <div class="m-desc">Cycle de gestion d'incident, communication de crise + 2 labs.</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">14:45 – 15:30</div>
+        <div class="slot-content">
+          <span class="m-label">M9</span><span class="m-title">Cadres normatifs & métiers</span>
+          <div class="m-desc">DGSSI, loi 05-20, DNSSI, CNDP, ISO 27001, métiers cyber (condensé) + 2 labs.</div>
+        </div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">15:30 – 15:45</div>
+        <div class="slot-content"><span class="m-title">Pause</span></div>
+      </div>
+      <div class="slot-row">
+        <div class="slot-time">15:45 – 17:00</div>
+        <div class="slot-content">
+          <span class="m-label">M10</span><span class="m-title">Tendances actuelles & plan d'action</span>
+          <div class="m-desc">IA, deepfakes, IoT + 2 labs, puis rédaction du plan d'action personnel et clôture.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="wrap">
+    <div class="slide-head">
+      <span class="eyebrow">Vue d'ensemble</span>
+      <h2>Les 10 modules et leurs labs, en un tableau</h2>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="mod-table">
+        <thead>
+          <tr><th>Module</th><th>Thème</th><th>Labs interactifs</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mn">M1</td><td>Introduction à la cybersécurité</td>
+            <td class="labs-cell"><a href="./module1-traqueur-exposition/">Traqueur d'Exposition</a><a href="./module1-radar-menaces/">Radar des Menaces</a><a href="./module1-cartographie-impact/">Cartographie d'Impact</a></td></tr>
+          <tr><td class="mn">M2</td><td>Notions fondamentales</td>
+            <td class="labs-cell"><a href="./module2-radar-cia/">Radar CIA</a><a href="./module2-grille-risque/">Grille de Risque</a></td></tr>
+          <tr><td class="mn">M3</td><td>Panorama des malwares</td>
+            <td class="labs-cell"><a href="./module3-detective-malwares/">Détective des Malwares</a><a href="./module3-feu-telechargement/">Feu du Téléchargement</a></td></tr>
+          <tr><td class="mn">M4</td><td>Attaques Web & ingénierie sociale</td>
+            <td class="labs-cell"><a href="./module4-anatomie-phishing/">Anatomie du Phishing</a><a href="./module4-technique-ingenierie/">Techniques d'Ingénierie Sociale</a></td></tr>
+          <tr><td class="mn">M5</td><td>Identités & accès</td>
+            <td class="labs-cell"><a href="./module5-coffre-mots-passe/">Coffre-Fort des Mots de Passe</a><a href="./module5-signal-compromission/">Signal ou Bruit</a></td></tr>
+          <tr><td class="mn">M6</td><td>Mobile, Wi-Fi & télétravail</td>
+            <td class="labs-cell"><a href="./module6-faux-point-acces/">Faux Point d'Accès</a><a href="./module6-feu-teletravail/">Feu du Télétravail</a></td></tr>
+          <tr><td class="mn">M7</td><td>Sauvegardes, Cloud & données perso</td>
+            <td class="labs-cell"><a href="./module7-verificateur-321/">Vérificateur 3-2-1</a><a href="./module7-feu-partage-cloud/">Feu du Partage Cloud</a></td></tr>
+          <tr><td class="mn">M8</td><td>Entreprise & gestion des incidents</td>
+            <td class="labs-cell"><a href="./module8-cycle-incident/">Cycle de l'Incident</a><a href="./module8-gravite-incident/">Niveau de Gravité</a></td></tr>
+          <tr><td class="mn">M9</td><td>Cadres normatifs & métiers</td>
+            <td class="labs-cell"><a href="./module9-qui-fait-quoi/">Qui Fait Quoi</a><a href="./module9-metiers-cyber/">Métiers de la Cybersécurité</a></td></tr>
+          <tr><td class="mn">M10</td><td>Tendances actuelles & plan d'action</td>
+            <td class="labs-cell"><a href="./module10-detecteur-deepfake/">Détecteur de Deepfake</a><a href="./module10-feu-objets-connectes/">Feu des Objets Connectés</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="cta-block">
+  <div class="wrap">
+    <h2>Prêt à organiser cette formation ?</h2>
+    <p>Explorez les labs avant votre première session, ou revenez à la présentation générale.</p>
+    <a class="btn btn-primary" href="./index.html">Explorer tous les labs</a>
+    <a class="btn btn-ghost" href="./landing.html">← Retour à la présentation</a>
+  </div>
+</div>
+
+<footer>LES FONDAMENTAUX DE LA CYBERSÉCURITÉ — Édition 2026 — Cyber Defense Operations</footer>
+
+</body>
+</html>
