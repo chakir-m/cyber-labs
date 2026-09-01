@@ -186,6 +186,10 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   └── ...                             ← Lab 2 du Module 3 (évaluation de risque à 3 niveaux, 4 situations)
 ├── module4-anatomie-phishing/
 │   └── ...                             ← Lab 1 du Module 4 (checklist multi-sélection, signaux vs distracteurs)
-└── module4-technique-ingenierie/
-    └── ...                             ← Lab 2 du Module 4 (choix unique parmi 5 techniques d'ingénierie sociale)
+├── module4-technique-ingenierie/
+│   └── ...                             ← Lab 2 du Module 4 (choix unique parmi 5 techniques d'ingénierie sociale)
+├── module5-coffre-mots-passe/
+│   └── ...                             ← Lab 1 du Module 5 (robustesse de mots de passe, échelle à 4 niveaux)
+└── module5-signal-compromission/
+    └── ...                             ← Lab 2 du Module 5 (classification binaire : signal réel ou fausse alerte)
 ```
