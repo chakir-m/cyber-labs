@@ -204,6 +204,13 @@ lui-même d'exemple complet et fonctionnel à consulter.
 
 ---
 
+## Composants visuels partagés
+
+Plusieurs labs utilisent des composants graphiques fournis par `assets/lab-engine.js`, pour rester cohérents visuellement sans dupliquer de code :
+
+- **Jauge de risque** (`LabEngine.gaugeMarkup` / `bindGauge`) — cadran semi-circulaire à aiguille animée, utilisé par les labs à 3 paliers (Feu du Téléchargement, Feu du Télétravail, Feu du Partage Cloud, Niveau de Gravité, Feu des Objets Connectés, Grille de Risque).
+- Les autres labs (grilles de cartes illustrées, mockup de smartphone, diagramme circulaire, quadrant, e-mail/visio interactifs) sont construits directement dans leur propre `lab-content.js`, le mécanisme étant trop spécifique à chacun pour être partagé.
+
 ## Structure du dépôt
 
 ```

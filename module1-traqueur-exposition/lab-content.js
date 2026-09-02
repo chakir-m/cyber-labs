@@ -32,6 +32,18 @@ let gameList = ACCOUNT_TYPES.filter((t) => t.core);
 let idx = 0;
 let answers = {};
 
+const CAT_ICON = {
+  "Email": "📧",
+  "Banque": "💳",
+  "Réseaux sociaux": "💬",
+  "Administratif": "🏛️",
+  "Professionnel": "💼",
+  "Sécurité": "🔐",
+  "Santé": "🩺",
+  "Identité & documents": "🪪",
+  "Loisirs & consommation": "🎟️",
+};
+
 window.LabConfig = {
   id: "module1-traqueur-exposition",
   title: "Traqueur d'Exposition",
@@ -185,6 +197,7 @@ function renderCardStack(container) {
     <div style="max-width:400px; margin:0 auto;">
       <div class="badge-card fade-in" id="badge-card">
         <div class="hole"></div>
+        <div id="card-icon" style="text-align:center; font-size:34px; margin-top:6px;">🔖</div>
         <div class="cat-tag" id="card-cat">CATÉGORIE</div>
         <div class="type-label" id="card-label">Type de compte</div>
         <div class="badge-strip">
@@ -219,6 +232,7 @@ function renderCard() {
   const t = gameList[idx];
   document.getElementById("card-cat").textContent = t.cat;
   document.getElementById("card-label").textContent = t.label;
+  document.getElementById("card-icon").textContent = CAT_ICON[t.cat] || "🔖";
   document.getElementById("progress-fill").style.width = (idx / gameList.length) * 100 + "%";
   document.getElementById("progress-label").textContent = "CARTE " + (idx + 1) + " / " + gameList.length;
 

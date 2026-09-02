@@ -10,12 +10,12 @@ const SCENARIO_TEXT =
   "Une clinique privée de taille moyenne subit une interruption de deux jours de son système de gestion des dossiers patients suite à un incident de sécurité. Pendant cette période, le personnel doit revenir à des procédures papier, certains rendez-vous doivent être reportés, et une partie du personnel administratif est mobilisée à temps plein sur la gestion de la crise plutôt que sur ses tâches habituelles.";
 
 const IMPACT_OPTIONS = [
-  { id: "operationnel", label: "Impact opérationnel (interruption de service, rendez-vous reportés)", correct: true },
-  { id: "financier", label: "Impact financier (mobilisation de personnel, perte de revenus)", correct: true },
-  { id: "reputationnel", label: "Impact réputationnel (confiance des patients)", correct: true },
-  { id: "humain", label: "Impact humain ou sanitaire (retard de soins, erreurs de procédure dégradée)", correct: true },
-  { id: "environnemental", label: "Impact environnemental (pollution, biodiversité)", correct: false },
-  { id: "aucun", label: "Aucun impact réel au-delà du coût technique de réparation", correct: false },
+  { id: "operationnel", label: "Impact opérationnel (interruption de service, rendez-vous reportés)", icon: "⚙️", correct: true },
+  { id: "financier", label: "Impact financier (mobilisation de personnel, perte de revenus)", icon: "💰", correct: true },
+  { id: "reputationnel", label: "Impact réputationnel (confiance des patients)", icon: "📣", correct: true },
+  { id: "humain", label: "Impact humain ou sanitaire (retard de soins, erreurs de procédure dégradée)", icon: "🩺", correct: true },
+  { id: "environnemental", label: "Impact environnemental (pollution, biodiversité)", icon: "🌱", correct: false },
+  { id: "aucun", label: "Aucun impact réel au-delà du coût technique de réparation", icon: "🚫", correct: false },
 ];
 
 const CLASSIFY_ITEMS = [
@@ -182,13 +182,21 @@ function renderStep1(container) {
       <div id="impact-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
         ${IMPACT_OPTIONS.map(
           (o) => `
-          <button class="toggle-btn impact-opt" data-id="${o.id}" style="text-align:left; background:var(--paper); color:var(--ink); border:1.5px solid #DCD7C8; padding:12px 14px;">
-            ${LabEngine.escapeHtml(o.label)}
+          <button class="impact-opt card-choice-row" data-id="${o.id}" style="display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:12px 14px; transition:border-color .15s ease, background .15s ease;">
+            <span style="font-size:20px; flex:none;">${o.icon}</span>
+            <span class="card-choice-label" style="flex:1; font-size:13px; color:var(--ink); line-height:1.4;">${LabEngine.escapeHtml(o.label)}</span>
+            <span class="impact-check" style="flex:none; width:20px; height:20px; border-radius:6px; border:2px solid #DCD7C8; display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent; transition:all .15s ease;">✓</span>
           </button>`
         ).join("")}
       </div>
       <button class="btn-primary" id="step1-next">Valider mes choix →</button>
     </div>
+    <style>
+      .card-choice-row:hover{ border-color:var(--gold) !important; }
+      .card-choice-row.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .card-choice-row.selected .card-choice-label{ color:#fff !important; }
+      .card-choice-row.selected .impact-check{ background:var(--gold); border-color:var(--gold); color:var(--navy-dark) !important; }
+    </style>
   `;
   container.querySelectorAll(".impact-opt").forEach((b) => {
     b.onclick = () => {
@@ -196,14 +204,10 @@ function renderStep1(container) {
       const i = selectedImpacts.indexOf(id);
       if (i === -1) {
         selectedImpacts.push(id);
-        b.style.background = "var(--navy)";
-        b.style.color = "#fff";
-        b.style.borderColor = "var(--navy)";
+        b.classList.add("selected");
       } else {
         selectedImpacts.splice(i, 1);
-        b.style.background = "var(--paper)";
-        b.style.color = "var(--ink)";
-        b.style.borderColor = "#DCD7C8";
+        b.classList.remove("selected");
       }
     };
   });
@@ -257,11 +261,11 @@ function renderStep3(container) {
       <p class="desc" style="font-size:14.5px; color:var(--ink); margin:14px 0 20px;">${LabEngine.escapeHtml(DUEL.question)}</p>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button class="role-card participant" id="duel-a" style="padding:16px 18px;">
-          <div class="role-glyph">A</div>
+          <div class="role-glyph" style="font-size:22px;">🏥</div>
           <div class="role-title" style="font-size:14.5px; text-align:left;">${LabEngine.escapeHtml(DUEL.optionA.label)}</div>
         </button>
         <button class="role-card formateur" id="duel-b" style="padding:16px 18px;">
-          <div class="role-glyph">B</div>
+          <div class="role-glyph" style="font-size:22px;">🛍️</div>
           <div class="role-title" style="font-size:14.5px; text-align:left;">${LabEngine.escapeHtml(DUEL.optionB.label)}</div>
         </button>
       </div>

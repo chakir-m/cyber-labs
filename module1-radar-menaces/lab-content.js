@@ -175,6 +175,20 @@ window.LabConfig = {
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
+  const QUADRANTS = [
+    { origin: "interne", intent: "intentionnelle", icon: "🕵️", label: "Interne + délibérée" },
+    { origin: "externe", intent: "intentionnelle", icon: "🎯", label: "Externe + délibérée" },
+    { origin: "interne", intent: "non-intentionnelle", icon: "🤦", label: "Interne + accidentelle" },
+    { origin: "externe", intent: "non-intentionnelle", icon: "🌪️", label: "Externe + accidentelle" },
+  ];
+  function cellHtml(q) {
+    return `
+      <button class="quad-btn" data-origin="${q.origin}" data-intent="${q.intent}" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:16px 8px; min-height:88px; transition:border-color .15s ease, background .15s ease;">
+        <span style="font-size:24px; line-height:1;">${q.icon}</span>
+        <span class="quad-label" style="font-size:11.5px; font-weight:600; color:var(--navy); text-align:center; line-height:1.25;">${q.label}</span>
+      </button>`;
+  }
+
   container.innerHTML = `
     <div class="progress-row" style="max-width:560px; margin:0 auto; padding:0 0 8px;">
       <div class="progress-track"><div class="progress-fill" style="width:${(idx / SCENARIOS.length) * 100}%"></div></div>
@@ -182,63 +196,52 @@ function renderScenario(container) {
     </div>
     <div class="card-shell fade-in" style="max-width:480px; margin:0 auto;">
       <span class="eyebrow">Situation à classer</span>
-      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:22px;">${LabEngine.escapeHtml(s.text)}</p>
+      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:18px;">${LabEngine.escapeHtml(s.text)}</p>
 
-      <div style="margin-bottom:18px;">
-        <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray);">D'où vient la menace ?</span>
-        <div class="toggle-row" id="origin-row" style="margin-bottom:0;">
-          <button class="toggle-btn" data-val="interne" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">Interne</button>
-          <button class="toggle-btn" data-val="externe" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">Externe</button>
-        </div>
+      <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray);">D'où vient la menace, et est-elle intentionnelle ?</span>
+      <div style="display:grid; grid-template-columns:56px 1fr 1fr; gap:6px; align-items:center; margin-bottom:4px;">
+        <div></div>
+        <div style="text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--gray); font-weight:600;">INTERNE</div>
+        <div style="text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--gray); font-weight:600;">EXTERNE</div>
       </div>
-
-      <div style="margin-bottom:22px;">
-        <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray);">Est-elle intentionnelle ?</span>
-        <div class="toggle-row" id="intent-row" style="margin-bottom:0;">
-          <button class="toggle-btn" data-val="intentionnelle" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">Intentionnelle</button>
-          <button class="toggle-btn" data-val="non-intentionnelle" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">Non intentionnelle</button>
-        </div>
+      <div style="display:grid; grid-template-columns:56px 1fr 1fr; gap:6px; margin-bottom:6px;">
+        <div style="display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9.5px; color:var(--gray); font-weight:600; text-align:center; line-height:1.2;">INTEN-<br>TIONN.</div>
+        ${cellHtml(QUADRANTS[0])}
+        ${cellHtml(QUADRANTS[1])}
+      </div>
+      <div style="display:grid; grid-template-columns:56px 1fr 1fr; gap:6px; margin-bottom:22px;">
+        <div style="display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9.5px; color:var(--gray); font-weight:600; text-align:center; line-height:1.2;">ACCI-<br>DENT.</div>
+        ${cellHtml(QUADRANTS[2])}
+        ${cellHtml(QUADRANTS[3])}
       </div>
 
       <button class="btn-primary" id="validate-btn" disabled>Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+    <style>
+      .quad-btn:hover{ border-color:var(--gold) !important; }
+      .quad-btn.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .quad-btn.selected .quad-label{ color:#fff !important; }
+    </style>
   `;
 
   let chosenOrigin = null, chosenIntent = null;
 
-  container.querySelectorAll("#origin-row .toggle-btn").forEach((b) => {
+  container.querySelectorAll(".quad-btn").forEach((b) => {
     b.onclick = () => {
-      chosenOrigin = b.dataset.val;
-      container.querySelectorAll("#origin-row .toggle-btn").forEach((x) => x.classList.toggle("active", x === b));
-      container.querySelectorAll("#origin-row .toggle-btn").forEach((x) => {
-        x.style.background = x === b ? "var(--navy)" : "var(--paper)";
-        x.style.color = x === b ? "#fff" : "var(--navy)";
-      });
-      checkReady();
+      chosenOrigin = b.dataset.origin;
+      chosenIntent = b.dataset.intent;
+      container.querySelectorAll(".quad-btn").forEach((x) => x.classList.toggle("selected", x === b));
+      document.getElementById("validate-btn").disabled = false;
     };
   });
-  container.querySelectorAll("#intent-row .toggle-btn").forEach((b) => {
-    b.onclick = () => {
-      chosenIntent = b.dataset.val;
-      container.querySelectorAll("#intent-row .toggle-btn").forEach((x) => {
-        x.style.background = x === b ? "var(--navy)" : "var(--paper)";
-        x.style.color = x === b ? "#fff" : "var(--navy)";
-      });
-      checkReady();
-    };
-  });
-
-  function checkReady() {
-    document.getElementById("validate-btn").disabled = !(chosenOrigin && chosenIntent);
-  }
 
   document.getElementById("validate-btn").onclick = () => {
     const correct = chosenOrigin === s.origin && chosenIntent === s.intent;
     results.push({ id: s.id, chosenOrigin, chosenIntent, correct });
 
     document.getElementById("validate-btn").classList.add("hidden");
-    container.querySelectorAll("#origin-row .toggle-btn, #intent-row .toggle-btn").forEach((b) => (b.disabled = true));
+    container.querySelectorAll(".quad-btn").forEach((b) => (b.disabled = true));
 
     const zone = document.getElementById("feedback-zone");
     zone.innerHTML = `
