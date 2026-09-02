@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --ice:#CADCFC;
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --gold-text:#7A5C1E; --ice:#CADCFC;
     --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188; --low:#4C8B6B; --high:#B3261E;
     --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
     --mono:'IBM Plex Mono', 'Courier New', monospace;
@@ -172,7 +172,7 @@
   <div class="global-actions" id="global-actions">
     <button class="global-btn success" id="global-unlock-btn">🔓 Tout déverrouiller</button>
     <button class="global-btn" id="global-lock-btn">🔒 Tout verrouiller</button>
-    <button class="global-btn danger" id="global-reset-btn">♻️ Réinitialiser</button>
+    <a class="global-btn danger" href="./admin.html" style="text-decoration:none; display:inline-flex; align-items:center;">📊 Espace formateur avancé →</a>
   </div>
   <div class="firebase-error-banner" id="firebase-error-banner">
     ⚠️ Impossible de lire l'état des labs sur Firebase. Vos règles Realtime Database autorisent probablement le chemin <code>labs/...</code> mais pas <code>course/...</code> — ajoutez-y les mêmes règles (voir la section « Firebase » du README) puis republiez. En attendant, les participants ne sont <strong>pas bloqués</strong> par précaution.
@@ -186,86 +186,10 @@
 <script src="./assets/firebase-config.js"></script>
 <script src="./assets/course-lock.js"></script>
 <script src="./assets/formateur-auth.js"></script>
+<script src="./assets/modules-data.js"></script>
 <script>
-// ============================================================================
-// Pour ajouter un nouveau lab : ajoutez une ligne dans "labs" du module
-// concerné ci-dessous, avec un "id" unique = nom du dossier du lab (identique
-// à window.LAB_ID défini dans son index.html). Pour un module sans lab pour
-// l'instant, laissez "labs: []".
-// ============================================================================
-const MODULES_DATA = [
-  {
-    num: 1, title: "Introduction à la cybersécurité",
-    labs: [
-      { id: "module1-traqueur-exposition", icon: "🔍", title: "Traqueur d'Exposition", sub: "Identifier ses informations sensibles", href: "./module1-traqueur-exposition/" },
-      { id: "module1-radar-menaces", icon: "🎯", title: "Radar des Menaces", sub: "Reconnaître les grandes catégories de cybermenaces", href: "./module1-radar-menaces/" },
-      { id: "module1-cartographie-impact", icon: "🗺️", title: "Cartographie d'Impact", sub: "Évaluer l'impact potentiel d'un incident", href: "./module1-cartographie-impact/" },
-    ],
-  },
-  {
-    num: 2, title: "Notions fondamentales",
-    labs: [
-      { id: "module2-radar-cia", icon: "🧭", title: "Radar CIA", sub: "Classer des incidents selon la triade Confidentialité/Intégrité/Disponibilité", href: "./module2-radar-cia/" },
-      { id: "module2-grille-risque", icon: "⚖️", title: "Grille de Risque", sub: "Estimer Menace × Vulnérabilité × Impact et prioriser 3 scénarios", href: "./module2-grille-risque/" },
-    ],
-  },
-  {
-    num: 3, title: "Panorama des malwares",
-    labs: [
-      { id: "module3-detective-malwares", icon: "🕵️", title: "Détective des Malwares", sub: "Identifier la bonne famille de malware parmi 8 (virus, ver, botnet, rootkit...)", href: "./module3-detective-malwares/" },
-      { id: "module3-feu-telechargement", icon: "🚦", title: "Feu Rouge du Téléchargement", sub: "Évaluer le niveau de risque de 4 demandes de téléchargement", href: "./module3-feu-telechargement/" },
-    ],
-  },
-  {
-    num: 4, title: "Attaques Web, emails & ingénierie sociale",
-    labs: [
-      { id: "module4-anatomie-phishing", icon: "🎣", title: "Anatomie du Phishing", sub: "Repérer les vrais signaux d'alerte d'un e-mail suspect (et éviter les faux)", href: "./module4-anatomie-phishing/" },
-      { id: "module4-technique-ingenierie", icon: "🎭", title: "Techniques d'Ingénierie Sociale", sub: "Reconnaître vishing, baiting, pretexting, smishing et quishing", href: "./module4-technique-ingenierie/" },
-    ],
-  },
-  {
-    num: 5, title: "Identités & accès",
-    labs: [
-      { id: "module5-coffre-mots-passe", icon: "🔐", title: "Coffre-Fort des Mots de Passe", sub: "Évaluer la robustesse de 4 mots de passe sur une échelle à 4 niveaux", href: "./module5-coffre-mots-passe/" },
-      { id: "module5-signal-compromission", icon: "📡", title: "Signal ou Bruit", sub: "Détecter un vrai signe de compromission de compte, sans fausse alerte", href: "./module5-signal-compromission/" },
-    ],
-  },
-  {
-    num: 6, title: "Sécurité mobile, Wi-Fi & télétravail",
-    labs: [
-      { id: "module6-faux-point-acces", icon: "📶", title: "Faux Point d'Accès", sub: "Trouver le bon réflexe face à des réseaux Wi-Fi publics dans 4 lieux", href: "./module6-faux-point-acces/" },
-      { id: "module6-feu-teletravail", icon: "🏠", title: "Feu du Télétravail", sub: "Évaluer le niveau de risque de 4 situations à domicile", href: "./module6-feu-teletravail/" },
-    ],
-  },
-  {
-    num: 7, title: "Sauvegardes, Cloud & données personnelles",
-    labs: [
-      { id: "module7-verificateur-321", icon: "💾", title: "Vérificateur 3-2-1", sub: "Confronter 3 dispositifs de sauvegarde aux critères de la règle 3-2-1", href: "./module7-verificateur-321/" },
-      { id: "module7-feu-partage-cloud", icon: "☁️", title: "Feu du Partage Cloud", sub: "Évaluer le niveau de risque de 4 configurations de partage cloud", href: "./module7-feu-partage-cloud/" },
-    ],
-  },
-  {
-    num: 8, title: "Cybersécurité en entreprise & gestion des incidents",
-    labs: [
-      { id: "module8-cycle-incident", icon: "🔄", title: "Cycle de l'Incident", sub: "Associer 6 actions aux 5 étapes du cycle de gestion d'incident", href: "./module8-cycle-incident/" },
-      { id: "module8-gravite-incident", icon: "🚨", title: "Niveau de Gravité", sub: "Classer 5 incidents en Mineur, Majeur ou Critique", href: "./module8-gravite-incident/" },
-    ],
-  },
-  {
-    num: 9, title: "Cadres normatifs & métiers de la cybersécurité",
-    labs: [
-      { id: "module9-qui-fait-quoi", icon: "⚖️", title: "Qui Fait Quoi", sub: "Associer 6 descriptions au bon texte, à la bonne autorité ou à la bonne norme", href: "./module9-qui-fait-quoi/" },
-      { id: "module9-metiers-cyber", icon: "🧑‍💻", title: "Métiers de la Cybersécurité", sub: "Associer 4 descriptions de mission au bon métier", href: "./module9-metiers-cyber/" },
-    ],
-  },
-  {
-    num: 10, title: "Tendances actuelles & plan d'action personnel",
-    labs: [
-      { id: "module10-detecteur-deepfake", icon: "🎭", title: "Détecteur de Deepfake", sub: "Repérer les vrais signaux d'alerte d'un appel vidéo suspect (et éviter les faux)", href: "./module10-detecteur-deepfake/" },
-      { id: "module10-feu-objets-connectes", icon: "📡", title: "Feu des Objets Connectés", sub: "Évaluer le niveau de risque de 4 objets connectés", href: "./module10-feu-objets-connectes/" },
-    ],
-  },
-];
+// La liste des modules et labs (MODULES_DATA) vient désormais de
+// assets/modules-data.js — modifiez ce fichier pour ajouter un nouveau lab.
 
 let unlockedMap = {};       // { labId: true } — rempli depuis Firebase
 let isFormateur = false;    // mode formateur actif dans CET onglet
@@ -339,17 +263,6 @@ async function unlockAllGlobal(unlock) {
   render();
   if (anyFailed) {
     alert("⚠️ Certaines activations n'ont pas pu être enregistrées sur Firebase. Voir la bannière rouge en haut de page et la section Firebase du README.");
-  }
-}
-
-async function resetAllGlobal() {
-  if (!confirm("Voulez-vous vraiment RÉINITIALISER l'état de tous les labs ? Tous redeviendront verrouillés, comme au premier déploiement. Cette action est immédiate pour tous les participants.")) return;
-  const ok = await window.CourseLock.resetAll();
-  if (ok) {
-    unlockedMap = {};
-    render();
-  } else {
-    alert("⚠️ La réinitialisation n'a pas pu être effectuée sur Firebase (règles de sécurité probablement incomplètes pour le chemin \"course/...\"). Voir la bannière rouge en haut de page et la section Firebase du README.");
   }
 }
 
@@ -449,7 +362,6 @@ async function boot() {
   document.getElementById("formateur-toggle-btn").addEventListener("click", toggleFormateurMode);
   document.getElementById("global-unlock-btn").addEventListener("click", () => unlockAllGlobal(true));
   document.getElementById("global-lock-btn").addEventListener("click", () => unlockAllGlobal(false));
-  document.getElementById("global-reset-btn").addEventListener("click", resetAllGlobal);
   try {
     unlockedMap = await window.CourseLock.getUnlockedMap();
   } catch (e) {
@@ -481,7 +393,8 @@ boot();
   <div class="wrap" style="padding-top:0;">
     <p class="footer-note">
       Cette page et l'ensemble des labs sont hébergés gratuitement sur GitHub Pages.<br>
-      Les labs grisés seront activés par votre formateur au fur et à mesure de la session — revenez-y plus tard si l'un d'eux vous intéresse.
+      Les labs grisés seront activés par votre formateur au fur et à mesure de la session — revenez-y plus tard si l'un d'eux vous intéresse.<br>
+      Une fois tous les labs terminés, récupérez votre <a href="./certificat.html" style="color:var(--navy); font-weight:600;">certificat de réussite</a>.
     </p>
   </div>
 </body>

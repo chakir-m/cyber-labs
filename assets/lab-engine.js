@@ -198,6 +198,14 @@ const LabEngine = (function () {
       const key = "resp:" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
       const result = await window.storage.set(key, JSON.stringify(record), true);
       if (!result) throw new Error("Échec de l'enregistrement (résultat vide)");
+      if (result.queued) {
+        const note = document.createElement("div");
+        note.style.cssText =
+          "margin-top:14px; background:#FFF8E8; border:1px dashed #E8D5A3; color:#7A5C1E; font-size:12.5px; padding:10px 14px; border-radius:10px; text-align:left; line-height:1.5;";
+        note.textContent =
+          "📶 Connexion instable : votre résultat est enregistré sur cet appareil et sera transmis automatiquement au formateur dès que la connexion revient. Rien n'est perdu — pas besoin de recommencer.";
+        container.appendChild(note);
+      }
     } catch (e) {
       console.error("Erreur d'enregistrement", e);
       const warn = document.createElement("div");

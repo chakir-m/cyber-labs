@@ -4,6 +4,7 @@
    de chaque lab) varie. */
   :root{
     --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3;
+    --gold-text:#7A5C1E; /* variante foncée du doré, accessible (WCAG AA) sur fond clair — le doré d'origine (--gold) ne passe pas le contraste minimal sur blanc/papier et ne doit être utilisé comme texte que sur fond sombre (navy) */
     --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
     --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
     --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
@@ -22,7 +23,7 @@
   /* ---------- Utility ---------- */
   .eyebrow{
     font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--gold); font-weight:600;
+    color:var(--gold-text); font-weight:600;
   }
   .center-wrap{flex:1; display:flex; align-items:center; justify-content:center; padding:24px;}
   .hidden{display:none !important;}

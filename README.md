@@ -172,6 +172,64 @@ individuellement au clic, pour ne faire défiler que ce qui vous intéresse.
 
 ---
 
+## 3ter. Espace formateur avancé (`admin.html`)
+
+Accessible depuis `labs.html` via le bouton **📊 Espace formateur avancé**
+(même mot de passe), cette page centralise tout ce qui ne concerne pas
+directement le verrouillage des labs :
+
+- **Vue d'ensemble** : nombre de participants distincts, nombre total de
+  réponses, nombre de personnes ayant terminé l'intégralité du parcours.
+- **Matrice participant × lab** : un tableau récapitulatif (qui a fait quoi,
+  avec le score obtenu), filtrable par pseudo et exportable en CSV — utile
+  pour un suivi après-formation sans devoir ouvrir les 21 tableaux de bord
+  un par un.
+- **Recherche de certificat** : vérifiez la progression de n'importe quel
+  participant sans qu'il ait besoin de le faire lui-même.
+- **Nouvelle session** : voir section suivante.
+
+> ⚠️ **Limite à connaître** : ce dépôt n'a pas de système de compte —
+> l'agrégation « qui a fait quoi » se fait uniquement par correspondance
+> exacte de pseudo (insensible à la casse et aux espaces en trop) entre les
+> labs. Si un participant change de pseudo en cours de route, ses résultats
+> apparaîtront comme deux personnes différentes. Rappelez au groupe
+> d'utiliser **le même pseudo du début à la fin**.
+
+### Nouvelle session (remplace l'ancien bouton « Réinitialiser »)
+
+Le bouton **🆕 Démarrer une nouvelle session**, dans la zone rouge en bas de
+`admin.html`, efface **définitivement** les réponses de tous les
+participants sur les 21 labs et reverrouille l'ensemble du parcours — à
+utiliser uniquement entre deux sessions de formation (par exemple avant
+d'accueillir un nouveau groupe), jamais en cours de route. Une double
+confirmation est demandée avant toute suppression.
+
+L'ancien bouton « Réinitialiser » (qui ne touchait qu'à l'état de
+verrouillage, sans effacer les réponses) a été retiré — cette nouvelle
+option couvre le même besoin tout en évitant l'ambiguïté sur ce qu'elle
+efface réellement.
+
+---
+
+## 3quater. Certificat de réussite (`certificat.html`)
+
+Page publique (aucun mot de passe), à partager avec les participants en fin
+de formation. Chacun y saisit le pseudo exact utilisé pendant les labs :
+
+- **Tant que les 21 labs ne sont pas tous complétés**, la page affiche
+  uniquement une barre de progression et la liste des labs manquants —
+  **aucun certificat ni résultat global n'est jamais affiché avant la fin
+  complète du parcours**, par conception.
+- **Une fois les 21 labs terminés**, un certificat nominatif s'affiche
+  (nom du participant, date de complétion), imprimable ou exportable en PDF
+  via le bouton dédié (utilise l'impression du navigateur).
+
+Comme pour l'espace formateur, la correspondance se fait par pseudo exact —
+un participant doit utiliser le même pseudo sur les 21 labs pour que son
+certificat se débloque.
+
+---
+
 ## 4. Ajouter un prochain lab (architecture à moteur partagé)
 
 Depuis la refonte, chaque lab ne contient plus que **deux fichiers propres à
@@ -195,8 +253,14 @@ Pour créer un nouveau lab :
    (le gabarit explique chacune des 6 sections à remplir : le jeu, le résumé
    participant, le badge de score, les statistiques collectives, le détail
    individuel, et les colonnes de l'export CSV).
-5. Ajoutez une carte pour ce lab dans `index.html` à la racine du dépôt.
-6. Publiez (upload sur GitHub) — aucune autre étape Firebase ou GitHub Pages
+5. Ajoutez une entrée pour ce lab dans `assets/modules-data.js` (dans le
+   tableau `labs` du module concerné) — cette liste est partagée par
+   `labs.html`, `admin.html` et `certificat.html`, un seul endroit à modifier.
+6. Pensez aussi à ajouter la pastille du lab dans la carte du module
+   correspondant sur `index.html` (la page d'accueil marketing) — cette page
+   a sa propre liste HTML, volontairement séparée pour ne pas mélanger
+   contenu marketing et logique applicative.
+7. Publiez (upload sur GitHub) — aucune autre étape Firebase ou GitHub Pages
    n'est nécessaire.
 
 Le fichier `module1-traqueur-exposition/lab-content.js` déjà livré sert
@@ -217,11 +281,14 @@ Plusieurs labs utilisent des composants graphiques fournis par `assets/lab-engin
 /
 ├── index.html                          ← page d'accueil PAR DÉFAUT (présentation de la formation 2 jours)
 ├── programme.html                      ← plaquette détaillée du programme (planning J1/J2, tableau des labs)
-├── labs.html                           ← hub listant tous les labs, classés par module
+├── labs.html                           ← hub listant tous les labs, classés par module (verrouillage inclus)
+├── admin.html                          ← espace formateur avancé (vue d'ensemble, export CSV, nouvelle session)
+├── certificat.html                     ← vérification publique + certificat de réussite (participants)
 ├── assets/
 │   ├── firebase-config.js              ← configuration Firebase (remplie une fois)
-│   ├── lab-storage.js                  ← couche de stockage (remplace window.storage)
+│   ├── lab-storage.js                  ← couche de stockage (remplace window.storage) + file d'attente locale hors-ligne
 │   ├── course-lock.js                  ← verrouillage/déverrouillage des labs par le formateur
+│   ├── modules-data.js                 ← liste centrale des 10 modules/21 labs (utilisée par labs.html, admin.html, certificat.html)
 │   ├── formateur-auth.js               ← protection par mot de passe du mode formateur
 │   ├── lab-engine.css                  ← styles partagés par tous les labs
 │   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail, jauge SVG...)

@@ -29,6 +29,58 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const LAB_ID = window.LAB_ID || "lab-sans-nom";
+  const PENDING_KEY = "lab_pending_writes";
+
+  // ==========================================================================
+  // RÉSILIENCE RÉSEAU — si l'écriture Firebase échoue (Wi-Fi de la salle
+  // coupé, par exemple), le résultat n'est JAMAIS perdu : il est mis en file
+  // d'attente dans le localStorage de l'appareil, puis réémis automatiquement
+  // dès que la connexion revient (au rechargement de la page, ou dès
+  // l'événement "online" du navigateur).
+  // ==========================================================================
+  function readPendingQueue() {
+    try {
+      return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]");
+    } catch (e) {
+      return [];
+    }
+  }
+  function writePendingQueue(queue) {
+    try {
+      localStorage.setItem(PENDING_KEY, JSON.stringify(queue));
+    } catch (e) {
+      console.error("[lab-storage] Impossible d'écrire la file d'attente locale :", e);
+    }
+  }
+  function queuePendingWrite(labId, key, value, shared) {
+    const queue = readPendingQueue();
+    queue.push({ labId, key, value, shared: !!shared, queuedAt: Date.now() });
+    writePendingQueue(queue);
+  }
+
+  async function flushPendingWrites() {
+    const queue = readPendingQueue();
+    if (queue.length === 0) return { flushed: 0, remaining: 0 };
+    const remaining = [];
+    let flushed = 0;
+    for (const item of queue) {
+      try {
+        const path = item.shared ? `labs/${item.labId}/shared` : `labs/${item.labId}/private/${getDeviceId()}`;
+        await db.ref(`${path}/${sanitizeKey(item.key)}`).set({ value: String(item.value), ts: item.queuedAt });
+        flushed++;
+      } catch (e) {
+        remaining.push(item); // toujours pas de réseau, on la garde pour le prochain essai
+      }
+    }
+    writePendingQueue(remaining);
+    if (flushed > 0) console.log(`[lab-storage] ${flushed} résultat(s) en attente synchronisé(s) avec succès.`);
+    return { flushed, remaining: remaining.length };
+  }
+
+  // Tentative de synchronisation au chargement, puis dès que le navigateur
+  // signale un retour de connexion réseau.
+  setTimeout(flushPendingWrites, 1500);
+  window.addEventListener("online", flushPendingWrites);
 
   // Les clés fournies par le jeu (ex. "resp:172839-ab12cd") contiennent des
   // caractères interdits dans les chemins Firebase (aucun ici en pratique,
@@ -56,13 +108,14 @@
 
   window.storage = {
     async set(key, value, shared) {
+      const k = sanitizeKey(key);
       try {
-        const k = sanitizeKey(key);
         await db.ref(`${basePath(shared)}/${k}`).set({ value: String(value), ts: Date.now() });
         return { key, value, shared: !!shared };
       } catch (e) {
-        console.error("[lab-storage] Erreur set:", e);
-        return null;
+        console.error("[lab-storage] Erreur d'écriture réseau, mise en file d'attente locale :", e);
+        queuePendingWrite(LAB_ID, key, value, shared);
+        return { key, value, shared: !!shared, queued: true };
       }
     },
 
@@ -99,5 +152,10 @@
         return null;
       }
     },
+
+    // Tente de renvoyer immédiatement tout résultat resté en file d'attente
+    // locale (utile par exemple si le formateur veut vérifier tout de suite
+    // après avoir reconnecté le Wi-Fi, sans attendre le prochain rechargement).
+    flushPending: flushPendingWrites,
   };
 })();

@@ -57,7 +57,8 @@ window.LabConfig = {
   renderGame(container, pseudo) {
     idx = 0;
     answers = {};
-    renderModeChoice(container);
+    gameList = ACCOUNT_TYPES; // version complète uniquement (20 cartes)
+    renderCardStack(container);
   },
 
   renderParticipantSummary(container, record) {
@@ -160,34 +161,6 @@ window.LabConfig = {
 };
 
 /* ============ Logique du jeu de tri (interne à ce lab) ============ */
-function renderModeChoice(container) {
-  container.innerHTML = `
-    <div class="card-shell fade-in" style="max-width:460px; margin:0 auto;">
-      <span class="eyebrow">Avant de commencer</span>
-      <h2>Combien de cartes ?</h2>
-      <p class="desc">Choisissez la durée qui convient à votre séance.</p>
-      <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
-        <button class="role-card participant" id="mode-court" style="padding:16px 18px;">
-          <div class="role-glyph">10</div>
-          <div><div class="role-title" style="font-size:16px;">Version courte</div><div class="role-sub">10 cartes, environ 10 minutes</div></div>
-        </button>
-        <button class="role-card formateur" id="mode-complet" style="padding:16px 18px;">
-          <div class="role-glyph">20</div>
-          <div><div class="role-title" style="font-size:16px;">Version complète</div><div class="role-sub">20 cartes, environ 18 minutes</div></div>
-        </button>
-      </div>
-    </div>
-  `;
-  document.getElementById("mode-court").onclick = () => {
-    gameList = ACCOUNT_TYPES.filter((t) => t.core);
-    renderCardStack(container);
-  };
-  document.getElementById("mode-complet").onclick = () => {
-    gameList = ACCOUNT_TYPES;
-    renderCardStack(container);
-  };
-}
-
 function renderCardStack(container) {
   container.innerHTML = `
     <div class="progress-row" style="max-width:560px; margin:0 auto; padding:0 0 8px;">

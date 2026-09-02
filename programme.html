@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3;
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --gold-text:#7A5C1E;
     --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
     --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
     --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
@@ -19,7 +19,7 @@
   body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
   .wrap{max-width:980px; margin:0 auto; padding:0 32px;}
   @media (max-width:700px){ .wrap{padding:0 20px;} }
-  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); font-weight:600;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-text); font-weight:600;}
 
   .topbar{
     display:flex; align-items:center; justify-content:space-between; padding:16px 32px;
@@ -66,7 +66,7 @@
   .info-card ul{list-style:none;}
   .info-card li{font-size:13.5px; color:var(--ink); padding:7px 0; border-bottom:1px solid #EDEAE0; display:flex; gap:10px;}
   .info-card li:last-child{border-bottom:none;}
-  .info-card li .b{color:var(--gold); flex:none;}
+  .info-card li .b{color:var(--gold-text); flex:none;}
 
   /* ---------- REPARTITION BAR ---------- */
   .split-bar{display:flex; height:34px; border-radius:8px; overflow:hidden; margin:20px 0 14px; max-width:560px;}
@@ -105,9 +105,9 @@
   }
   .mod-table td{padding:12px 14px; border-bottom:1px solid #EDEAE0; vertical-align:top;}
   .mod-table tr:hover td{background:#FBFAF7;}
-  .mod-table .mn{font-family:var(--mono); color:var(--gold); font-weight:700;}
+  .mod-table .mn{font-family:var(--mono); color:var(--gold-text); font-weight:700;}
   .mod-table .labs-cell a{color:var(--navy); font-size:12px; text-decoration:none; display:block; margin-bottom:3px;}
-  .mod-table .labs-cell a:hover{color:var(--gold); text-decoration:underline;}
+  .mod-table .labs-cell a:hover{color:var(--gold-text); text-decoration:underline;}
 
   /* ---------- CTA ---------- */
   .cta-block{text-align:center; padding:70px 0 90px;}

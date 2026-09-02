@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon certificat — Les Fondamentaux de la Cybersécurité</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --gold-text:#7A5C1E;
+    --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --low:#4C8B6B; --high:#B3261E;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  a{color:inherit;}
+  .hidden{display:none !important;}
+
+  .hero{
+    background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
+    color:#fff; padding:48px 24px 40px; text-align:center;
+  }
+  .hero .back-link{display:inline-block; font-family:var(--mono); font-size:11.5px; color:rgba(255,255,255,.6); text-decoration:none; margin-bottom:14px;}
+  .hero .back-link:hover{color:#fff;}
+  .hero .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-light); font-weight:600;}
+  .hero h1{font-family:var(--serif); font-size:clamp(26px,4.5vw,38px); font-weight:700; margin:12px 0 10px;}
+  .hero p{color:var(--ice); font-size:14.5px; max-width:34em; margin:0 auto;}
+
+  .wrap{max-width:640px; margin:0 auto; padding:40px 20px 80px;}
+
+  .search-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:28px 26px; text-align:center;}
+  .search-card input{
+    width:100%; padding:14px 16px; border-radius:10px; border:1.5px solid #DCD7C8; font-size:16px;
+    font-family:inherit; margin:14px 0; text-align:center;
+  }
+  .btn-primary{background:var(--navy); color:#fff; padding:13px 26px; border-radius:10px; font-weight:600; font-size:14.5px; width:100%;}
+  .btn-primary:hover{background:var(--navy-dark);}
+
+  .progress-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:26px 26px; margin-top:24px;}
+  .progress-card h3{font-family:var(--serif); color:var(--navy); font-size:20px; margin-bottom:6px;}
+  .progress-bar-outer{height:10px; background:#EDEAE0; border-radius:6px; overflow:hidden; margin:14px 0;}
+  .progress-bar-inner{height:100%; background:var(--gold); border-radius:6px; transition:width .4s ease;}
+  .progress-list{list-style:none; margin-top:16px;}
+  .progress-list li{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #EDEAE0; font-size:13.5px;}
+  .progress-list li:last-child{border-bottom:none;}
+  .progress-list .ok{color:var(--low); font-weight:700;}
+  .progress-list .ko{color:var(--gray);}
+
+  .certificate{
+    background:#fff; border:3px double var(--gold); border-radius:16px; padding:48px 40px; margin-top:24px;
+    text-align:center; position:relative;
+  }
+  .certificate::before{
+    content:"🎓"; font-size:40px; display:block; margin-bottom:10px;
+  }
+  .certificate .cert-kicker{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-text); font-weight:600;}
+  .certificate h2{font-family:var(--serif); font-size:26px; color:var(--navy); margin:14px 0 4px;}
+  .certificate .cert-name{font-family:var(--serif); font-size:32px; font-weight:700; color:var(--navy); margin:18px 0; padding-bottom:14px; border-bottom:2px solid var(--gold-light);}
+  .certificate p{font-size:14px; color:var(--ink); line-height:1.7; max-width:36em; margin:0 auto 8px;}
+  .certificate .cert-date{font-family:var(--mono); font-size:12px; color:var(--gray); margin-top:18px;}
+  .cert-actions{margin-top:24px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+  .btn-ghost{border:1.5px solid #DCD7C8; color:var(--navy); padding:11px 20px; border-radius:10px; font-size:13.5px; font-weight:600; text-decoration:none; display:inline-block;}
+  .btn-ghost:hover{border-color:var(--navy);}
+
+  .status-msg{margin-top:16px; font-size:13px; padding:12px 14px; border-radius:10px; text-align:left; line-height:1.6;}
+  .status-msg.err{background:#FBEAEA; color:#8A2E27;}
+
+  @media print{
+    .hero, .search-card, .no-print{display:none !important;}
+    .wrap{padding:0; max-width:100%;}
+    .certificate{border:3px double #C9A24B; margin:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a class="back-link" href="./index.html">← Retour à l'accueil</a>
+  <div class="eyebrow">Les fondamentaux de la cybersécurité</div>
+  <h1>Mon certificat</h1>
+  <p>Entrez le pseudo exact que vous avez utilisé sur les labs pour vérifier votre progression et obtenir votre certificat une fois les 21 labs terminés.</p>
+</div>
+
+<div class="wrap">
+  <div class="search-card no-print">
+    <span style="font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray);">Vérification</span>
+    <input type="text" id="pseudo-input" placeholder="Votre pseudo exact (ex. Salma)">
+    <button class="btn-primary" id="check-btn">Vérifier ma progression</button>
+    <div id="error-zone"></div>
+  </div>
+
+  <div id="result-zone"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="./assets/firebase-config.js"></script>
+<script src="./assets/modules-data.js"></script>
+<script>
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function allLabs() {
+  return MODULES_DATA.flatMap((m) => m.labs.map((l) => Object.assign({}, l, { moduleNum: m.num, moduleTitle: m.title })));
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function findParticipantRecords(pseudo) {
+  const labs = allLabs();
+  const norm = pseudo.trim().toLowerCase();
+  const perLab = {};
+  await Promise.all(
+    labs.map(async (l) => {
+      try {
+        const snap = await db.ref(`labs/${l.id}/shared`).get();
+        if (!snap.exists()) return;
+        const val = snap.val();
+        let best = null;
+        Object.keys(val).forEach((k) => {
+          try {
+            const rec = JSON.parse(val[k].value);
+            if ((rec.pseudo || "").trim().toLowerCase() === norm) {
+              if (!best || (rec.ts || 0) > (best.ts || 0)) best = rec;
+            }
+          } catch (e) { /* entrée corrompue, ignorée */ }
+        });
+        if (best) perLab[l.id] = best;
+      } catch (e) {
+        console.error("Erreur de lecture pour", l.id, e);
+      }
+    })
+  );
+  return perLab;
+}
+
+function renderProgress(pseudo, perLab, labs) {
+  const count = Object.keys(perLab).length;
+  const pct = Math.round((count / labs.length) * 100);
+  const items = labs
+    .map((l) => {
+      const done = !!perLab[l.id];
+      return `<li><span class="${done ? "ok" : "ko"}">${done ? "✓" : "—"}</span> ${escapeHtml(l.title)} <span style="margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--gray);">M${l.moduleNum}</span></li>`;
+    })
+    .join("");
+  document.getElementById("result-zone").innerHTML = `
+    <div class="progress-card">
+      <h3>Progression de ${escapeHtml(pseudo)}</h3>
+      <p style="color:var(--gray); font-size:13.5px;">${count} / ${labs.length} labs terminés — le certificat apparaîtra automatiquement ici une fois les ${labs.length} labs complétés.</p>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${pct}%;"></div></div>
+      <ul class="progress-list">${items}</ul>
+    </div>
+  `;
+}
+
+function renderCertificate(pseudo, perLab, labs) {
+  const latestTs = Math.max(...Object.values(perLab).map((r) => r.ts || 0));
+  const dateStr = new Date(latestTs).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  document.getElementById("result-zone").innerHTML = `
+    <div class="certificate">
+      <div class="cert-kicker">Certificat de réussite</div>
+      <h2>Les Fondamentaux de la Cybersécurité</h2>
+      <div class="cert-name">${escapeHtml(pseudo)}</div>
+      <p>a terminé avec succès l'intégralité du parcours de formation, soit <strong>10 modules</strong> et <strong>${labs.length} labs interactifs</strong>, couvrant les fondamentaux de la cybersécurité jusqu'aux tendances actuelles (IA, deepfakes, objets connectés).</p>
+      <div class="cert-date">Complété le ${dateStr}</div>
+      <div class="cert-actions no-print">
+        <button class="btn-ghost" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+        <a class="btn-ghost" href="./index.html">← Retour à l'accueil</a>
+      </div>
+    </div>
+  `;
+}
+
+async function checkProgress() {
+  const pseudo = document.getElementById("pseudo-input").value.trim();
+  const errorZone = document.getElementById("error-zone");
+  const resultZone = document.getElementById("result-zone");
+  errorZone.innerHTML = "";
+  resultZone.innerHTML = "";
+  if (!pseudo) {
+    errorZone.innerHTML = `<div class="status-msg err">Merci de saisir votre pseudo.</div>`;
+    return;
+  }
+  document.getElementById("check-btn").textContent = "Vérification…";
+  document.getElementById("check-btn").disabled = true;
+  try {
+    const labs = allLabs();
+    const perLab = await findParticipantRecords(pseudo);
+    const count = Object.keys(perLab).length;
+    if (count === 0) {
+      errorZone.innerHTML = `<div class="status-msg err">Aucune réponse trouvée pour « ${escapeHtml(pseudo)} ». Vérifiez que vous avez utilisé exactement le même pseudo sur tous les labs (majuscules/espaces compris).</div>`;
+    } else if (count === labs.length) {
+      renderCertificate(pseudo, perLab, labs);
+    } else {
+      renderProgress(pseudo, perLab, labs);
+    }
+  } catch (e) {
+    console.error(e);
+    errorZone.innerHTML = `<div class="status-msg err">⚠️ Impossible de vérifier votre progression pour le moment (problème de connexion). Réessayez dans un instant.</div>`;
+  }
+  document.getElementById("check-btn").textContent = "Vérifier ma progression";
+  document.getElementById("check-btn").disabled = false;
+}
+
+document.getElementById("check-btn").addEventListener("click", checkProgress);
+document.getElementById("pseudo-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") checkProgress();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace formateur — Les Fondamentaux de la Cybersécurité</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --gold-text:#7A5C1E;
+    --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none;}
+  a{color:inherit;}
+  .hidden{display:none !important;}
+
+  .hero{
+    background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
+    color:#fff; padding:44px 24px 36px; text-align:center;
+  }
+  .hero .back-link{display:inline-block; font-family:var(--mono); font-size:11.5px; color:rgba(255,255,255,.6); text-decoration:none; margin-bottom:14px;}
+  .hero .back-link:hover{color:#fff;}
+  .hero .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-light); font-weight:600;}
+  .hero h1{font-family:var(--serif); font-size:clamp(24px,4vw,34px); font-weight:700; margin:12px 0 8px;}
+  .hero p{color:var(--ice); font-size:14px; max-width:34em; margin:0 auto;}
+
+  .wrap{max-width:1080px; margin:0 auto; padding:32px 20px 80px;}
+
+  .gate{max-width:420px; margin:80px auto; text-align:center; background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:40px 30px;}
+  .gate h2{font-family:var(--serif); color:var(--navy); margin-bottom:12px;}
+  .gate p{color:var(--gray); font-size:13.5px; margin-bottom:20px; line-height:1.6;}
+  .btn-primary{background:var(--navy); color:#fff; padding:12px 22px; border-radius:10px; font-weight:600; font-size:14px;}
+  .btn-primary:hover{background:var(--navy-dark);}
+
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:32px;}
+  @media (max-width:700px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:20px 22px;}
+  .stat-card .n{font-family:var(--serif); font-size:32px; font-weight:700; color:var(--navy);}
+  .stat-card .l{font-size:12px; color:var(--gray); margin-top:2px;}
+  .stat-card.accent{background:linear-gradient(155deg,var(--navy),var(--navy-dark)); border-color:transparent;}
+  .stat-card.accent .n{color:var(--gold-light);}
+  .stat-card.accent .l{color:var(--ice);}
+
+  .section-title{
+    font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray);
+    margin:36px 0 14px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after{content:""; flex:1; height:1px; background:#E4E0D5;}
+
+  .panel{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:24px 26px;}
+
+  .danger-zone{background:#FBEAEA; border:1.5px solid #EBC9C4; border-radius:16px; padding:22px 24px;}
+  .danger-zone h3{color:var(--high); font-family:var(--serif); font-size:18px; margin-bottom:8px;}
+  .danger-zone p{font-size:13px; color:#7A3530; line-height:1.6; margin-bottom:16px;}
+  .btn-danger{background:var(--high); color:#fff; padding:12px 20px; border-radius:10px; font-weight:600; font-size:13.5px;}
+  .btn-danger:hover{background:#8f1e18;}
+  .btn-danger:disabled{opacity:.5; cursor:not-allowed;}
+
+  .matrix-wrap{overflow-x:auto; border:1.5px solid #E4E0D5; border-radius:12px;}
+  table.matrix{border-collapse:collapse; font-size:12.5px; white-space:nowrap; width:100%;}
+  table.matrix th, table.matrix td{padding:9px 10px; border-bottom:1px solid #EDEAE0; text-align:center;}
+  table.matrix th{font-family:var(--mono); font-size:10.5px; color:var(--gray); background:var(--paper); position:sticky; top:0;}
+  table.matrix td.pseudo-cell, table.matrix th.pseudo-th{text-align:left; font-weight:600; color:var(--navy); position:sticky; left:0; background:#fff; z-index:1; min-width:150px;}
+  table.matrix th.pseudo-th{background:var(--paper); z-index:2;}
+  .cell-ok{color:var(--low); font-weight:700;}
+  .cell-ko{color:#DCD7C8;}
+  .completion-bar-mini{width:60px; height:6px; border-radius:3px; background:#EDEAE0; display:inline-block; overflow:hidden; vertical-align:middle;}
+  .completion-bar-mini span{display:block; height:100%; background:var(--low);}
+
+  .search-row{display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+  .search-row input{flex:1; min-width:200px; padding:11px 14px; border-radius:10px; border:1.5px solid #DCD7C8; font-size:14px; font-family:inherit;}
+  .btn-ghost{border:1.5px solid #DCD7C8; color:var(--navy); padding:11px 18px; border-radius:10px; font-size:13.5px; font-weight:600;}
+  .btn-ghost:hover{border-color:var(--navy);}
+
+  .empty-note{text-align:center; padding:40px 20px; color:var(--gray); font-size:13.5px;}
+  .loading-note{text-align:center; padding:30px; color:var(--gray); font-family:var(--mono); font-size:12.5px;}
+  .status-msg{margin-top:12px; font-size:12.5px; padding:10px 14px; border-radius:8px;}
+  .status-msg.ok{background:#E7F3EC; color:var(--low);}
+  .status-msg.err{background:#FBEAEA; color:var(--high);}
+
+  .csv-btn{font-family:var(--mono); font-size:11.5px; color:var(--navy); border:1px solid #DCD7C8; border-radius:20px; padding:7px 14px; background:#fff;}
+  .csv-btn:hover{border-color:var(--navy);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a class="back-link" href="./labs.html">← Retour aux labs</a>
+  <div class="eyebrow">Les fondamentaux de la cybersécurité</div>
+  <h1>Espace formateur</h1>
+  <p>Vue d'ensemble des 10 modules, gestion de session, et vérification des certificats de complétion.</p>
+</div>
+
+<div id="gate-screen" class="gate">
+  <h2>Accès protégé</h2>
+  <p>Cette page nécessite le mot de passe formateur. Cliquez ci-dessous pour vous authentifier.</p>
+  <button class="btn-primary" id="gate-btn">🔑 M'authentifier</button>
+</div>
+
+<div class="wrap hidden" id="admin-content">
+
+  <div class="stat-row" id="stat-row">
+    <div class="loading-note">Chargement des données de tous les labs…</div>
+  </div>
+
+  <div class="section-title">Vue d'ensemble par participant</div>
+  <div class="search-row">
+    <input type="text" id="search-input" placeholder="Filtrer par pseudo…">
+    <button class="csv-btn" id="export-csv-btn">⬇ Exporter en CSV</button>
+    <button class="btn-ghost" id="refresh-btn">↻ Actualiser</button>
+  </div>
+  <div class="matrix-wrap" id="matrix-wrap">
+    <div class="loading-note">Chargement…</div>
+  </div>
+
+  <div class="section-title">Vérifier un certificat</div>
+  <div class="panel">
+    <p style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;">
+      Les participants peuvent vérifier eux-mêmes leur certificat sur
+      <a href="./certificat.html" style="color:var(--navy); font-weight:600;">certificat.html</a>.
+      Vous pouvez aussi consulter la progression de n'importe qui ici :
+    </p>
+    <div class="search-row" style="margin-bottom:0;">
+      <input type="text" id="cert-search-input" placeholder="Pseudo du participant…">
+      <button class="btn-ghost" id="cert-search-btn">Vérifier</button>
+    </div>
+    <div id="cert-result" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="section-title">Nouvelle session</div>
+  <div class="danger-zone">
+    <h3>⚠️ Effacer toutes les données et repartir à zéro</h3>
+    <p>
+      Cette action supprime <strong>définitivement</strong> les réponses de <strong>tous les participants</strong> sur
+      les <strong>20 labs</strong>, et reverrouille l'ensemble du parcours (comme au premier déploiement).
+      À utiliser uniquement <strong>entre deux sessions de formation</strong> — par exemple avant d'accueillir un nouveau
+      groupe — jamais en cours de session. Cette action est irréversible.
+    </p>
+    <button class="btn-danger" id="new-session-btn">🆕 Démarrer une nouvelle session (tout effacer)</button>
+    <div id="session-status"></div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="./assets/firebase-config.js"></script>
+<script src="./assets/course-lock.js"></script>
+<script src="./assets/formateur-auth.js"></script>
+<script src="./assets/modules-data.js"></script>
+<script>
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function allLabs() {
+  return MODULES_DATA.flatMap((m) => m.labs.map((l) => Object.assign({}, l, { moduleNum: m.num })));
+}
+function allLabIds() {
+  return allLabs().map((l) => l.id);
+}
+
+let labsData = {}; // { labId: [record, ...] }
+let participants = new Map(); // key: pseudo normalisé -> { display, perLab: {labId: record} }
+
+async function fetchAllLabsData() {
+  const labs = allLabs();
+  const result = {};
+  await Promise.all(
+    labs.map(async (l) => {
+      try {
+        const snap = await db.ref(`labs/${l.id}/shared`).get();
+        const records = [];
+        if (snap.exists()) {
+          const val = snap.val();
+          Object.keys(val).forEach((k) => {
+            try {
+              const parsed = JSON.parse(val[k].value);
+              records.push(parsed);
+            } catch (e) { /* entrée corrompue, ignorée */ }
+          });
+        }
+        result[l.id] = records;
+      } catch (e) {
+        console.error("Erreur de lecture pour", l.id, e);
+        result[l.id] = [];
+      }
+    })
+  );
+  return result;
+}
+
+function buildParticipants(data) {
+  const map = new Map();
+  const labs = allLabs();
+  labs.forEach((l) => {
+    (data[l.id] || []).forEach((record) => {
+      const pseudo = (record.pseudo || "").trim();
+      if (!pseudo) return;
+      const norm = pseudo.toLowerCase();
+      if (!map.has(norm)) map.set(norm, { display: pseudo, perLab: {} });
+      const entry = map.get(norm);
+      const existing = entry.perLab[l.id];
+      if (!existing || (record.ts || 0) > (existing.ts || 0)) {
+        entry.perLab[l.id] = record; // garde la soumission la plus récente en cas de doublon
+      }
+    });
+  });
+  return map;
+}
+
+function renderStats(data, parts) {
+  const labs = allLabs();
+  const totalResponses = labs.reduce((s, l) => s + (data[l.id] || []).length, 0);
+  const totalParticipants = parts.size;
+  let fullyCompleted = 0;
+  parts.forEach((p) => {
+    if (Object.keys(p.perLab).length === labs.length) fullyCompleted++;
+  });
+  const completionRate = totalParticipants > 0 ? Math.round((fullyCompleted / totalParticipants) * 100) : 0;
+
+  document.getElementById("stat-row").innerHTML = `
+    <div class="stat-card accent"><div class="n">${totalParticipants}</div><div class="l">Participants distincts (tous labs confondus)</div></div>
+    <div class="stat-card"><div class="n">${totalResponses}</div><div class="l">Réponses enregistrées au total</div></div>
+    <div class="stat-card"><div class="n">${fullyCompleted}</div><div class="l">Ont terminé les 20 labs</div></div>
+    <div class="stat-card"><div class="n">${completionRate}%</div><div class="l">Taux de complétion globale</div></div>
+  `;
+}
+
+function renderMatrix(parts, filter) {
+  const labs = allLabs();
+  const wrap = document.getElementById("matrix-wrap");
+  const rows = Array.from(parts.entries())
+    .filter(([norm, p]) => !filter || p.display.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a, b) => Object.keys(b[1].perLab).length - Object.keys(a[1].perLab).length);
+
+  if (rows.length === 0) {
+    wrap.innerHTML = `<div class="empty-note">Aucun participant ${filter ? "ne correspond à ce filtre" : "n'a encore soumis de réponse"}.</div>`;
+    return;
+  }
+
+  const headerCells = labs.map((l) => `<th title="${l.title}">${l.icon}</th>`).join("");
+  const bodyRows = rows
+    .map(([norm, p]) => {
+      const count = Object.keys(p.perLab).length;
+      const pct = Math.round((count / labs.length) * 100);
+      const cells = labs
+        .map((l) => {
+          const rec = p.perLab[l.id];
+          if (!rec) return `<td class="cell-ko">—</td>`;
+          const scoreLabel = rec.total ? `${rec.score ?? "?"}/${rec.total}` : "✓";
+          return `<td class="cell-ok" title="${scoreLabel}">✓</td>`;
+        })
+        .join("");
+      return `
+        <tr>
+          <td class="pseudo-cell">${LabEngineEscape(p.display)}<br>
+            <span class="completion-bar-mini"><span style="width:${pct}%;"></span></span>
+            <span style="font-family:var(--mono); font-size:10px; color:var(--gray);"> ${count}/${labs.length}</span>
+          </td>
+          ${cells}
+        </tr>`;
+    })
+    .join("");
+
+  wrap.innerHTML = `
+    <table class="matrix">
+      <thead><tr><th class="pseudo-th">Participant</th>${headerCells}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  `;
+}
+
+function LabEngineEscape(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function exportCsv() {
+  const labs = allLabs();
+  const header = ["Participant", "Labs complétés", ...labs.map((l) => l.title)];
+  const lines = [header];
+  Array.from(participants.values()).forEach((p) => {
+    const row = [p.display, Object.keys(p.perLab).length + "/" + labs.length];
+    labs.forEach((l) => {
+      const rec = p.perLab[l.id];
+      row.push(rec ? (rec.total ? `${rec.score ?? "?"}/${rec.total}` : "Complété") : "");
+    });
+    lines.push(row);
+  });
+  const csv = lines.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "recapitulatif-formation-" + new Date().toISOString().slice(0, 10) + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function searchCertificate() {
+  const pseudo = document.getElementById("cert-search-input").value.trim();
+  const resultEl = document.getElementById("cert-result");
+  if (!pseudo) { resultEl.innerHTML = ""; return; }
+  const norm = pseudo.toLowerCase();
+  const p = participants.get(norm);
+  const labs = allLabs();
+  if (!p) {
+    resultEl.innerHTML = `<div class="status-msg err">Aucune réponse trouvée pour « ${LabEngineEscape(pseudo)} ». Vérifiez l'orthographe exacte utilisée par le participant.</div>`;
+    return;
+  }
+  const count = Object.keys(p.perLab).length;
+  if (count === labs.length) {
+    resultEl.innerHTML = `<div class="status-msg ok">✓ ${LabEngineEscape(p.display)} a terminé les ${labs.length} labs — certificat disponible sur <a href="./certificat.html" style="font-weight:600;">certificat.html</a>.</div>`;
+  } else {
+    const missing = labs.filter((l) => !p.perLab[l.id]).map((l) => l.title);
+    resultEl.innerHTML = `<div class="status-msg err">${LabEngineEscape(p.display)} a terminé ${count}/${labs.length} labs. Il manque : ${missing.map(LabEngineEscape).join(", ")}.</div>`;
+  }
+}
+
+async function loadAndRender() {
+  document.getElementById("matrix-wrap").innerHTML = `<div class="loading-note">Chargement…</div>`;
+  labsData = await fetchAllLabsData();
+  participants = buildParticipants(labsData);
+  renderStats(labsData, participants);
+  renderMatrix(participants, document.getElementById("search-input").value.trim());
+}
+
+async function startNewSession() {
+  const ok1 = confirm(
+    "ATTENTION : cette action va supprimer DÉFINITIVEMENT les réponses de TOUS les participants sur les 20 labs, et reverrouiller l'ensemble du parcours.\n\nÀ utiliser uniquement entre deux sessions de formation. Continuer ?"
+  );
+  if (!ok1) return;
+  const ok2 = confirm("Dernière confirmation : voulez-vous vraiment tout effacer ? Cette action est irréversible.");
+  if (!ok2) return;
+
+  const statusEl = document.getElementById("session-status");
+  statusEl.innerHTML = `<div class="status-msg ok">Suppression en cours…</div>`;
+  const btn = document.getElementById("new-session-btn");
+  btn.disabled = true;
+  try {
+    for (const labId of allLabIds()) {
+      await db.ref(`labs/${labId}/shared`).remove();
+      await db.ref(`labs/${labId}/private`).remove();
+    }
+    await window.CourseLock.resetAll();
+    statusEl.innerHTML = `<div class="status-msg ok">✓ Nouvelle session prête : toutes les données ont été effacées, tous les labs sont reverrouillés.</div>`;
+    await loadAndRender();
+  } catch (e) {
+    console.error(e);
+    statusEl.innerHTML = `<div class="status-msg err">⚠️ Une erreur est survenue pendant la suppression (vérifiez les règles Firebase). Certaines données ont peut-être déjà été effacées — vérifiez avant de continuer.</div>`;
+  }
+  btn.disabled = false;
+}
+
+async function boot() {
+  const ok = await window.ensureFormateurAccess();
+  if (!ok) {
+    document.getElementById("gate-btn").onclick = boot;
+    return;
+  }
+  document.getElementById("gate-screen").classList.add("hidden");
+  document.getElementById("admin-content").classList.remove("hidden");
+
+  document.getElementById("search-input").addEventListener("input", (e) => renderMatrix(participants, e.target.value.trim()));
+  document.getElementById("refresh-btn").addEventListener("click", loadAndRender);
+  document.getElementById("export-csv-btn").addEventListener("click", exportCsv);
+  document.getElementById("cert-search-btn").addEventListener("click", searchCertificate);
+  document.getElementById("new-session-btn").addEventListener("click", startNewSession);
+
+  await loadAndRender();
+}
+
+document.getElementById("gate-btn").addEventListener("click", boot);
+</script>
+</body>
+</html>
