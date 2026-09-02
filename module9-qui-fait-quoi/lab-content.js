@@ -6,14 +6,14 @@
 // Malwares (Module 3) : grille de boutons à choix unique.
 
 const ENTITIES = [
-  { key: "dgssi", label: "DGSSI" },
-  { key: "loi0520", label: "Loi 05-20" },
-  { key: "dnssi", label: "DNSSI" },
-  { key: "cndp", label: "CNDP" },
-  { key: "loi0908", label: "Loi 09-08" },
-  { key: "macert", label: "maCERT" },
-  { key: "iso27001", label: "ISO/IEC 27001" },
-  { key: "nistcsf", label: "NIST CSF" },
+  { key: "dgssi", label: "DGSSI", icon: "🏛️" },
+  { key: "loi0520", label: "Loi 05-20", icon: "📜" },
+  { key: "dnssi", label: "DNSSI", icon: "📋" },
+  { key: "cndp", label: "CNDP", icon: "🛡️" },
+  { key: "loi0908", label: "Loi 09-08", icon: "📄" },
+  { key: "macert", label: "maCERT", icon: "🚨" },
+  { key: "iso27001", label: "ISO/IEC 27001", icon: "🌐" },
+  { key: "nistcsf", label: "NIST CSF", icon: "🧭" },
 ];
 const ENTITY_LABEL = Object.fromEntries(ENTITIES.map((e) => [e.key, e.label]));
 
@@ -181,8 +181,12 @@ window.LabConfig = {
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
-  const entityBtnsHtml = ENTITIES.map(
-    (e) => `<button class="toggle-btn entity-btn" data-val="${e.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; flex:1 1 40%;">${e.label}</button>`
+  const entityCardsHtml = ENTITIES.map(
+    (e) => `
+      <button class="entity-btn card-choice" data-val="${e.key}" style="display:flex; flex-direction:column; align-items:center; gap:6px; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:14px 6px; transition:border-color .15s ease, background .15s ease;">
+        <span style="font-size:24px; line-height:1;">${e.icon}</span>
+        <span class="card-choice-label" style="font-size:11.5px; font-weight:600; color:var(--navy); text-align:center; line-height:1.2;">${e.label}</span>
+      </button>`
   ).join("");
 
   container.innerHTML = `
@@ -193,22 +197,23 @@ function renderScenario(container) {
     <div class="card-shell fade-in" style="max-width:500px; margin:0 auto;">
       <span class="eyebrow">De qui ou de quoi parle-t-on ?</span>
       <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(s.text)}</p>
-      <div class="toggle-row" id="entity-row" style="flex-wrap:wrap; margin-bottom:0;">${entityBtnsHtml}</div>
+      <div id="entity-row" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:0;">${entityCardsHtml}</div>
       <button class="btn-primary" id="validate-btn" disabled style="margin-top:18px;">Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+    <style>
+      @media (max-width:420px){ #entity-row{ grid-template-columns:repeat(2,1fr) !important; } }
+      .card-choice:hover{ border-color:var(--gold) !important; }
+      .card-choice.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .card-choice.selected .card-choice-label{ color:#fff !important; }
+    </style>
   `;
 
   let chosen = null;
   container.querySelectorAll("#entity-row .entity-btn").forEach((b) => {
     b.onclick = () => {
       chosen = b.dataset.val;
-      container.querySelectorAll("#entity-row .entity-btn").forEach((x) => {
-        const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
-      });
+      container.querySelectorAll("#entity-row .entity-btn").forEach((x) => x.classList.toggle("selected", x === b));
       document.getElementById("validate-btn").disabled = false;
     };
   });

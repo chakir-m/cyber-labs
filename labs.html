@@ -46,6 +46,21 @@
   }
   .formateur-banner.visible{display:block;}
 
+  .global-actions{
+    display:none; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+    padding:14px 20px; background:#fff; border-bottom:1px solid #E4E0D5;
+  }
+  .global-actions.visible{display:flex;}
+  .global-btn{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; border-radius:20px; padding:8px 16px;
+    border:1.5px solid #DCD7C8; background:#fff; color:var(--navy);
+  }
+  .global-btn:hover{border-color:var(--navy);}
+  .global-btn.danger{color:var(--high); border-color:#EBC9C4;}
+  .global-btn.danger:hover{border-color:var(--high); background:#FBEAEA;}
+  .global-btn.success{color:var(--low); border-color:#C9DDD0;}
+  .global-btn.success:hover{border-color:var(--low); background:#EAF4EE;}
+
   .firebase-error-banner{
     background:#FBEAEA; color:var(--high); text-align:center; font-size:13px; font-weight:600;
     padding:14px 20px; display:none; line-height:1.6;
@@ -153,6 +168,11 @@
   </div>
   <div class="formateur-banner" id="formateur-banner">
     Mode formateur actif — cliquez sur un module pour l'ouvrir, puis activez ou désactivez chaque lab au fur et à mesure de vos sessions.
+  </div>
+  <div class="global-actions" id="global-actions">
+    <button class="global-btn success" id="global-unlock-btn">🔓 Tout déverrouiller</button>
+    <button class="global-btn" id="global-lock-btn">🔒 Tout verrouiller</button>
+    <button class="global-btn danger" id="global-reset-btn">♻️ Réinitialiser</button>
   </div>
   <div class="firebase-error-banner" id="firebase-error-banner">
     ⚠️ Impossible de lire l'état des labs sur Firebase. Vos règles Realtime Database autorisent probablement le chemin <code>labs/...</code> mais pas <code>course/...</code> — ajoutez-y les mêmes règles (voir la section « Firebase » du README) puis republiez. En attendant, les participants ne sont <strong>pas bloqués</strong> par précaution.
@@ -294,6 +314,45 @@ async function unlockAllInModule(mod, unlock) {
   }
 }
 
+function allLabIds() {
+  return MODULES_DATA.flatMap((m) => m.labs.map((l) => l.id));
+}
+
+async function unlockAllGlobal(unlock) {
+  const label = unlock ? "déverrouiller TOUS les labs" : "verrouiller TOUS les labs";
+  if (!confirm(`Voulez-vous vraiment ${label} des 10 modules ? Les participants verront le changement immédiatement.`)) return;
+
+  const ids = allLabIds();
+  const previous = {};
+  ids.forEach((id) => (previous[id] = isLabUnlocked(id)));
+  ids.forEach((id) => (unlockedMap[id] = unlock));
+  render();
+
+  let anyFailed = false;
+  for (const id of ids) {
+    const ok = await window.CourseLock.setUnlocked(id, unlock);
+    if (!ok) {
+      anyFailed = true;
+      unlockedMap[id] = previous[id];
+    }
+  }
+  render();
+  if (anyFailed) {
+    alert("⚠️ Certaines activations n'ont pas pu être enregistrées sur Firebase. Voir la bannière rouge en haut de page et la section Firebase du README.");
+  }
+}
+
+async function resetAllGlobal() {
+  if (!confirm("Voulez-vous vraiment RÉINITIALISER l'état de tous les labs ? Tous redeviendront verrouillés, comme au premier déploiement. Cette action est immédiate pour tous les participants.")) return;
+  const ok = await window.CourseLock.resetAll();
+  if (ok) {
+    unlockedMap = {};
+    render();
+  } else {
+    alert("⚠️ La réinitialisation n'a pas pu être effectuée sur Firebase (règles de sécurité probablement incomplètes pour le chemin \"course/...\"). Voir la bannière rouge en haut de page et la section Firebase du README.");
+  }
+}
+
 async function toggleFormateurMode() {
   if (!isFormateur) {
     const ok = await window.ensureFormateurAccess();
@@ -305,6 +364,7 @@ async function toggleFormateurMode() {
   document.getElementById("formateur-toggle-btn").classList.toggle("active", isFormateur);
   document.getElementById("formateur-toggle-btn").textContent = isFormateur ? "🔑 Quitter le mode formateur" : "🔑 Mode formateur";
   document.getElementById("formateur-banner").classList.toggle("visible", isFormateur);
+  document.getElementById("global-actions").classList.toggle("visible", isFormateur);
   render();
 }
 
@@ -387,6 +447,9 @@ function render() {
 
 async function boot() {
   document.getElementById("formateur-toggle-btn").addEventListener("click", toggleFormateurMode);
+  document.getElementById("global-unlock-btn").addEventListener("click", () => unlockAllGlobal(true));
+  document.getElementById("global-lock-btn").addEventListener("click", () => unlockAllGlobal(false));
+  document.getElementById("global-reset-btn").addEventListener("click", resetAllGlobal);
   try {
     unlockedMap = await window.CourseLock.getUnlockedMap();
   } catch (e) {

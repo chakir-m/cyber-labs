@@ -8,9 +8,9 @@
 // donc un ENSEMBLE de réponses et pas une seule valeur.
 
 const PILLARS = [
-  { key: "confidentialite", label: "Confidentialité" },
-  { key: "integrite", label: "Intégrité" },
-  { key: "disponibilite", label: "Disponibilité" },
+  { key: "confidentialite", label: "Confidentialité", icon: "🔏", desc: "Seules les personnes autorisées y accèdent" },
+  { key: "integrite", label: "Intégrité", icon: "✅", desc: "La donnée n'est pas altérée sans autorisation" },
+  { key: "disponibilite", label: "Disponibilité", icon: "⚡", desc: "Le service reste accessible quand on en a besoin" },
 ];
 
 const SCENARIOS = [
@@ -190,7 +190,14 @@ function renderScenario(container) {
   const s = SCENARIOS[idx];
   const pillarsHtml = PILLARS.map(
     (p) => `
-      <button class="toggle-btn pillar-btn" data-val="${p.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">${p.label}</button>`
+      <button class="pillar-btn card-choice-row" data-val="${p.key}" style="display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:14px 16px; transition:border-color .15s ease, background .15s ease;">
+        <span style="font-size:24px; flex:none;">${p.icon}</span>
+        <span style="flex:1;">
+          <span class="card-choice-label" style="display:block; font-size:14px; font-weight:700; color:var(--navy);">${p.label}</span>
+          <span class="card-choice-desc" style="display:block; font-size:11.5px; color:var(--gray); margin-top:1px;">${p.desc}</span>
+        </span>
+        <span class="pillar-check" style="flex:none; width:22px; height:22px; border-radius:6px; border:2px solid #DCD7C8; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; transition:all .15s ease;">✓</span>
+      </button>`
   ).join("");
 
   container.innerHTML = `
@@ -204,12 +211,19 @@ function renderScenario(container) {
 
       <div style="margin-bottom:22px;">
         <span class="eyebrow" style="display:block; margin-bottom:8px; color:var(--gray);">Quel(s) pilier(s) de la triade CIA sont touchés ? (une ou plusieurs réponses)</span>
-        <div class="toggle-row" id="pillar-row" style="margin-bottom:0;">${pillarsHtml}</div>
+        <div id="pillar-row" style="display:flex; flex-direction:column; gap:10px;">${pillarsHtml}</div>
       </div>
 
       <button class="btn-primary" id="validate-btn" disabled>Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+    <style>
+      .card-choice-row:hover{ border-color:var(--gold) !important; }
+      .card-choice-row.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .card-choice-row.selected .card-choice-label{ color:#fff !important; }
+      .card-choice-row.selected .card-choice-desc{ color:var(--ice) !important; }
+      .card-choice-row.selected .pillar-check{ background:var(--gold); border-color:var(--gold); color:var(--navy-dark) !important; }
+    </style>
   `;
 
   const chosen = new Set();
@@ -219,12 +233,10 @@ function renderScenario(container) {
       const val = b.dataset.val;
       if (chosen.has(val)) {
         chosen.delete(val);
-        b.style.background = "var(--paper)";
-        b.style.color = "var(--navy)";
+        b.classList.remove("selected");
       } else {
         chosen.add(val);
-        b.style.background = "var(--navy)";
-        b.style.color = "#fff";
+        b.classList.add("selected");
       }
       document.getElementById("validate-btn").disabled = chosen.size === 0;
     };

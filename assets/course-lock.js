@@ -110,5 +110,17 @@
     stopListening() {
       db.ref(PATH).off();
     },
+
+    // Supprime en une seule opération tout l'état de verrouillage — tous les
+    // labs redeviennent verrouillés par défaut (comme au premier déploiement).
+    async resetAll() {
+      try {
+        await db.ref(PATH).remove();
+        return true;
+      } catch (e) {
+        console.error("[course-lock] Erreur lors de la réinitialisation :", e);
+        return false;
+      }
+    },
   };
 })();

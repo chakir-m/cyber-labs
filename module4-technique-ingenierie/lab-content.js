@@ -7,11 +7,11 @@
 // et pretexting (confiance construite patiemment sur plusieurs échanges).
 
 const TECHNIQUES = [
-  { key: "vishing", label: "Vishing" },
-  { key: "baiting", label: "Baiting" },
-  { key: "pretexting", label: "Pretexting" },
-  { key: "smishing", label: "Smishing" },
-  { key: "quishing", label: "Quishing" },
+  { key: "vishing", label: "Vishing", icon: "📞" },
+  { key: "baiting", label: "Baiting", icon: "🎣" },
+  { key: "pretexting", label: "Pretexting", icon: "🎭" },
+  { key: "smishing", label: "Smishing", icon: "💬" },
+  { key: "quishing", label: "Quishing", icon: "📱" },
 ];
 const TECH_LABEL = Object.fromEntries(TECHNIQUES.map((t) => [t.key, t.label]));
 
@@ -173,8 +173,12 @@ window.LabConfig = {
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
-  const techBtnsHtml = TECHNIQUES.map(
-    (t) => `<button class="toggle-btn tech-btn" data-val="${t.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; flex:1 1 30%;">${t.label}</button>`
+  const techCardsHtml = TECHNIQUES.map(
+    (t) => `
+      <button class="tech-btn card-choice" data-val="${t.key}" style="display:flex; flex-direction:column; align-items:center; gap:6px; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:16px 8px; transition:border-color .15s ease, background .15s ease;">
+        <span style="font-size:28px; line-height:1;">${t.icon}</span>
+        <span class="card-choice-label" style="font-size:13px; font-weight:600; color:var(--navy); text-align:center;">${t.label}</span>
+      </button>`
   ).join("");
 
   container.innerHTML = `
@@ -185,22 +189,23 @@ function renderScenario(container) {
     <div class="card-shell fade-in" style="max-width:500px; margin:0 auto;">
       <span class="eyebrow">Quelle technique d'ingénierie sociale ?</span>
       <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(s.text)}</p>
-      <div class="toggle-row" id="tech-row" style="flex-wrap:wrap; margin-bottom:0;">${techBtnsHtml}</div>
+      <div id="tech-row" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:0;">${techCardsHtml}</div>
       <button class="btn-primary" id="validate-btn" disabled style="margin-top:18px;">Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+    <style>
+      @media (max-width:380px){ #tech-row{ grid-template-columns:repeat(2,1fr) !important; } }
+      .card-choice:hover{ border-color:var(--gold) !important; }
+      .card-choice.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .card-choice.selected .card-choice-label{ color:#fff !important; }
+    </style>
   `;
 
   let chosen = null;
   container.querySelectorAll("#tech-row .tech-btn").forEach((b) => {
     b.onclick = () => {
       chosen = b.dataset.val;
-      container.querySelectorAll("#tech-row .tech-btn").forEach((x) => {
-        const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
-      });
+      container.querySelectorAll("#tech-row .tech-btn").forEach((x) => x.classList.toggle("selected", x === b));
       document.getElementById("validate-btn").disabled = false;
     };
   });

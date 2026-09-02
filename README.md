@@ -217,7 +217,7 @@ lui-même d'exemple complet et fonctionnel à consulter.
 │   ├── course-lock.js                  ← verrouillage/déverrouillage des labs par le formateur
 │   ├── formateur-auth.js               ← protection par mot de passe du mode formateur
 │   ├── lab-engine.css                  ← styles partagés par tous les labs
-│   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail...)
+│   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail, jauge SVG...)
 │   ├── lab-template.html               ← gabarit HTML à dupliquer pour un nouveau lab
 │   └── lab-content.template.js         ← gabarit commenté du contenu d'un lab
 ├── module1-traqueur-exposition/

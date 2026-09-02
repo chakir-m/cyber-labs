@@ -180,12 +180,76 @@ window.LabConfig = {
   ],
 };
 
+/* ============ Diagramme circulaire des 5 étapes (SVG) ============ */
+// Positions précalculées sur un pentagone régulier, en partant du haut et en
+// tournant dans le sens horaire — pour matérialiser visuellement le fait que
+// le cycle de gestion d'incident est circulaire, pas linéaire. Seuls les
+// numéros figurent dans le cercle (une légende texte fiable et non tronquée
+// est affichée juste en dessous) pour garantir des zones cliquables stables
+// sur tous les écrans.
+const WHEEL_POS = [
+  { x: 100, y: 22 }, // 1 - Préparation (haut)
+  { x: 171, y: 76 }, // 2 - Détection & analyse (droite haute)
+  { x: 144, y: 160 }, // 3 - Confinement (droite basse)
+  { x: 56, y: 160 }, // 4 - Éradication & récupération (gauche basse)
+  { x: 29, y: 76 }, // 5 - Retour d'expérience (gauche haute)
+];
+
+function wheelMarkup() {
+  const arrows = WHEEL_POS
+    .map((p, i) => {
+      const n = WHEEL_POS[(i + 1) % WHEEL_POS.length];
+      const mx = (p.x + n.x) / 2, my = (p.y + n.y) / 2;
+      return `<line x1="${p.x}" y1="${p.y}" x2="${n.x}" y2="${n.y}" stroke="#DCD7C8" stroke-width="2" stroke-dasharray="4 4" style="pointer-events:none;"></line><text x="${mx}" y="${my}" font-size="9" fill="var(--gold)" text-anchor="middle" style="pointer-events:none;">▸</text>`;
+    })
+    .join("");
+  const nodes = STEPS
+    .map((s, i) => {
+      const p = WHEEL_POS[i];
+      return `
+        <g class="wheel-node" data-key="${s.key}" style="cursor:pointer;">
+          <circle cx="${p.x}" cy="${p.y}" r="23" fill="var(--paper)" stroke="var(--navy)" stroke-width="2" style="transition:fill .15s ease, stroke .15s ease;"></circle>
+          <text x="${p.x}" y="${p.y + 5}" text-anchor="middle" font-family="var(--serif)" font-weight="700" font-size="15" fill="var(--navy)" style="pointer-events:none; transition:fill .15s ease;">${i + 1}</text>
+        </g>`;
+    })
+    .join("");
+  const legend = STEPS
+    .map((s, i) => `<span style="display:inline-flex; align-items:center; gap:4px; margin:2px 8px;"><b style="color:var(--navy);">${i + 1}</b> ${LabEngine.escapeHtml(s.label)}</span>`)
+    .join("");
+  return `
+    <div style="max-width:280px; margin:0 auto;">
+      <svg viewBox="0 0 200 190" style="width:100%; display:block;">
+        ${arrows}
+        ${nodes}
+      </svg>
+    </div>
+    <div style="text-align:center; font-size:11px; color:var(--gray); line-height:1.9; margin-top:6px;">${legend}</div>`;
+}
+
+function bindWheel(container, onSelect) {
+  function setSelected(key) {
+    container.querySelectorAll(".wheel-node").forEach((g) => {
+      const active = g.dataset.key === key;
+      const circle = g.querySelector("circle");
+      const num = g.querySelector("text");
+      circle.setAttribute("fill", active ? "var(--gold)" : "var(--paper)");
+      circle.setAttribute("stroke", active ? "var(--gold)" : "var(--navy)");
+      num.setAttribute("fill", active ? "var(--navy-dark)" : "var(--navy)");
+    });
+  }
+  container.querySelectorAll(".wheel-node").forEach((g) => {
+    g.onclick = () => {
+      const key = g.dataset.key;
+      setSelected(key);
+      onSelect(key);
+    };
+  });
+  return setSelected;
+}
+
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const a = ACTIONS[idx];
-  const stepBtnsHtml = STEPS.map(
-    (s) => `<button class="toggle-btn step-btn" data-val="${s.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; flex:1 1 45%;">${s.label}</button>`
-  ).join("");
 
   container.innerHTML = `
     <div class="progress-row" style="max-width:560px; margin:0 auto; padding:0 0 8px;">
@@ -195,25 +259,18 @@ function renderScenario(container) {
     <div class="card-shell fade-in" style="max-width:520px; margin:0 auto;">
       ${idx === 0 ? `<div style="background:var(--paper); border:1.5px solid #DCD7C8; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--ink); line-height:1.5;"><strong>Contexte :</strong> ${LabEngine.escapeHtml(SCENARIO_TEXT)}</div>` : ""}
       <span class="eyebrow">À quelle étape du cycle appartient cette action ?</span>
-      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(a.text)}</p>
-      <div class="toggle-row" id="step-row" style="flex-wrap:wrap; margin-bottom:0;">${stepBtnsHtml}</div>
-      <button class="btn-primary" id="validate-btn" disabled style="margin-top:18px;">Valider ma réponse</button>
+      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:16px;">${LabEngine.escapeHtml(a.text)}</p>
+      ${wheelMarkup()}
+      <p class="desc" style="font-size:12px; color:var(--gray); text-align:center; margin-top:4px;">👆 Touchez l'étape du cycle correspondante</p>
+      <button class="btn-primary" id="validate-btn" disabled style="margin-top:14px;">Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
   `;
 
   let chosen = null;
-  container.querySelectorAll("#step-row .step-btn").forEach((b) => {
-    b.onclick = () => {
-      chosen = b.dataset.val;
-      container.querySelectorAll("#step-row .step-btn").forEach((x) => {
-        const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
-      });
-      document.getElementById("validate-btn").disabled = false;
-    };
+  bindWheel(container, (key) => {
+    chosen = key;
+    document.getElementById("validate-btn").disabled = false;
   });
 
   document.getElementById("validate-btn").onclick = () => {
@@ -221,7 +278,7 @@ function renderScenario(container) {
     results.push({ id: a.id, chosen, correct });
 
     document.getElementById("validate-btn").classList.add("hidden");
-    container.querySelectorAll(".step-btn").forEach((b) => (b.disabled = true));
+    container.querySelectorAll(".wheel-node").forEach((g) => (g.style.pointerEvents = "none"));
 
     const zone = document.getElementById("feedback-zone");
     zone.innerHTML = `

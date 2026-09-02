@@ -6,9 +6,9 @@
 // l'échelle de risque Faible/Modéré/Élevé.
 
 const TIERS = [
-  { key: "mineur", label: "🟢 Mineur" },
-  { key: "majeur", label: "🟠 Majeur" },
-  { key: "critique", label: "🔴 Critique" },
+  { key: "mineur", label: "🟢 Mineur", emoji: "MINEUR", color: "var(--low)" },
+  { key: "majeur", label: "🟠 Majeur", emoji: "MAJEUR", color: "var(--mid)" },
+  { key: "critique", label: "🔴 Critique", emoji: "CRITIQUE", color: "var(--high)" },
 ];
 const TIER_LABEL = Object.fromEntries(TIERS.map((t) => [t.key, t.label]));
 
@@ -175,9 +175,6 @@ window.LabConfig = {
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
-  const tierBtnsHtml = TIERS.map(
-    (t) => `<button class="toggle-btn tier-btn" data-val="${t.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">${t.label}</button>`
-  ).join("");
 
   container.innerHTML = `
     <div class="progress-row" style="max-width:560px; margin:0 auto; padding:0 0 8px;">
@@ -186,25 +183,18 @@ function renderScenario(container) {
     </div>
     <div class="card-shell fade-in" style="max-width:480px; margin:0 auto;">
       <span class="eyebrow">Quel niveau de gravité ?</span>
-      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(s.text)}</p>
-      <div class="toggle-row" id="tier-row" style="flex-direction:column; gap:10px; margin-bottom:0;">${tierBtnsHtml}</div>
-      <button class="btn-primary" id="validate-btn" disabled style="margin-top:18px;">Valider ma réponse</button>
+      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:16px;">${LabEngine.escapeHtml(s.text)}</p>
+      ${LabEngine.gaugeMarkup(TIERS)}
+      <p class="desc" style="font-size:12px; color:var(--gray); text-align:center; margin-top:8px;">👆 Touchez la zone du cadran correspondant à votre estimation</p>
+      <button class="btn-primary" id="validate-btn" disabled style="margin-top:14px;">Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
   `;
 
   let chosen = null;
-  container.querySelectorAll("#tier-row .tier-btn").forEach((b) => {
-    b.onclick = () => {
-      chosen = b.dataset.val;
-      container.querySelectorAll("#tier-row .tier-btn").forEach((x) => {
-        const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
-      });
-      document.getElementById("validate-btn").disabled = false;
-    };
+  LabEngine.bindGauge(container, TIERS, (key) => {
+    chosen = key;
+    document.getElementById("validate-btn").disabled = false;
   });
 
   document.getElementById("validate-btn").onclick = () => {
@@ -212,7 +202,7 @@ function renderScenario(container) {
     results.push({ id: s.id, chosen, correct });
 
     document.getElementById("validate-btn").classList.add("hidden");
-    container.querySelectorAll(".tier-btn").forEach((b) => (b.disabled = true));
+    container.querySelectorAll(".gauge-zone").forEach((el) => (el.style.pointerEvents = "none"));
 
     const zone = document.getElementById("feedback-zone");
     zone.innerHTML = `

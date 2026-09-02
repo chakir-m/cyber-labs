@@ -15,6 +15,7 @@ const SCENARIOS = [
     text: "Vous avez deux heures d'attente avant votre vol et devez consulter votre messagerie professionnelle. Votre téléphone détecte trois réseaux : « Aeroport_Free_WiFi », « Airport-Guest » et « Aeroport_WiFi_Officiel ».",
     options: ["Aeroport_Free_WiFi", "Airport-Guest", "Aeroport_WiFi_Officiel", "Vérifier le nom exact auprès du personnel avant de se connecter à l'un des trois"],
     answerIdx: 3,
+    isNetworkList: true,
     explanation: "Aucun de ces trois noms ne garantit sa légitimité : un faux point d'accès peut très bien s'appeler « Aeroport_WiFi_Officiel » pour paraître crédible. Seule une vérification directe auprès du personnel de l'aéroport permet de confirmer le nom exact du réseau légitime.",
   },
   {
@@ -164,15 +165,54 @@ window.LabConfig = {
   ],
 };
 
+/* ============ Mockup d'écran de smartphone ============ */
+function phoneScreenMarkup(s) {
+  const isNetwork = !!s.isNetworkList;
+  const headerText = isNetwork ? "📶 Réseaux Wi-Fi disponibles" : "🤔 Que faites-vous ?";
+
+  const rowsHtml = s.options
+    .map((opt, i) => {
+      if (isNetwork && i < s.options.length - 1) {
+        // Ligne "réseau Wi-Fi" avec barres de signal + cadenas
+        return `
+          <button class="opt-btn phone-row" data-idx="${i}" style="display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid #EDEAE0; padding:12px 4px;">
+            <svg width="18" height="14" viewBox="0 0 18 14" style="flex:none;"><rect x="0" y="9" width="3" height="5" rx="1" fill="var(--gray)"></rect><rect x="5" y="6" width="3" height="8" rx="1" fill="var(--gray)"></rect><rect x="10" y="3" width="3" height="11" rx="1" fill="var(--navy)"></rect><rect x="15" y="0" width="3" height="14" rx="1" fill="var(--navy)"></rect></svg>
+            <span class="opt-text" style="flex:1; font-size:13.5px; color:inherit; font-family:var(--mono);">${LabEngine.escapeHtml(opt)}</span>
+            <span style="flex:none; font-size:13px;">🔒</span>
+          </button>`;
+      }
+      if (isNetwork) {
+        // Dernière option = action de vérification, pas un réseau
+        return `
+          <button class="opt-btn phone-row" data-idx="${i}" style="display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--paper); border:none; border-radius:8px; padding:12px 10px; margin-top:8px;">
+            <span style="flex:none; font-size:15px;">🛈</span>
+            <span class="opt-text" style="flex:1; font-size:13px; color:inherit; font-weight:600;">${LabEngine.escapeHtml(opt)}</span>
+          </button>`;
+      }
+      // Écran de décision générique (scénarios B, C, D) : options-phrases
+      return `
+        <button class="opt-btn phone-row" data-idx="${i}" style="display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left; background:#fff; border:none; border-bottom:1px solid #EDEAE0; padding:12px 4px;">
+          <span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--paper); border:1.5px solid #DCD7C8; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:var(--navy); margin-top:1px;">${i + 1}</span>
+          <span class="opt-text" style="flex:1; font-size:13px; color:inherit; line-height:1.5;">${LabEngine.escapeHtml(opt)}</span>
+        </button>`;
+    })
+    .join("");
+
+  return `
+    <div class="phone-mockup" style="max-width:300px; margin:0 auto 16px; border:7px solid var(--navy-dark); border-radius:28px; overflow:hidden; background:#fff; box-shadow:0 14px 30px rgba(18,23,63,.18);">
+      <div style="background:var(--navy-dark); color:#fff; font-family:var(--mono); font-size:10px; padding:7px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>9:41</span><span>${LabEngine.escapeHtml(s.place)}</span><span>🔋</span>
+      </div>
+      <div style="padding:12px 14px 6px;">
+        <div style="font-weight:700; font-size:12.5px; color:var(--navy); margin-bottom:6px;">${headerText}</div>
+        ${rowsHtml}
+      </div>
+    </div>`;
+}
+
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
-  const optsHtml = s.options
-    .map(
-      (opt, i) =>
-        `<button class="toggle-btn opt-btn" data-idx="${i}" style="text-align:left; justify-content:flex-start; background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8; padding:12px 14px; width:100%; display:block;">${LabEngine.escapeHtml(opt)}</button>`
-    )
-    .join("");
 
   container.innerHTML = `
     <div class="progress-row" style="max-width:560px; margin:0 auto; padding:0 0 8px;">
@@ -181,8 +221,8 @@ function renderScenario(container) {
     </div>
     <div class="card-shell fade-in" style="max-width:520px; margin:0 auto;">
       <span class="eyebrow">${LabEngine.escapeHtml(s.place)}</span>
-      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(s.text)}</p>
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">${optsHtml}</div>
+      <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:16px;">${LabEngine.escapeHtml(s.text)}</p>
+      ${phoneScreenMarkup(s)}
       <button class="btn-primary" id="validate-btn" disabled>Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
@@ -190,13 +230,13 @@ function renderScenario(container) {
 
   let chosenIdx = null;
   container.querySelectorAll(".opt-btn").forEach((b) => {
+    b.dataset.bg = b.style.background || "#fff";
     b.onclick = () => {
       chosenIdx = parseInt(b.dataset.idx, 10);
       container.querySelectorAll(".opt-btn").forEach((x) => {
         const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
+        x.style.background = active ? "var(--navy)" : x.dataset.bg;
+        x.style.color = active ? "#fff" : "var(--ink)";
       });
       document.getElementById("validate-btn").disabled = false;
     };

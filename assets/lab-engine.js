@@ -62,6 +62,72 @@ const LabEngine = (function () {
   }
 
   /* ---------------------------------------------------------------------
+   * Jauge de risque — composant SVG partagé (cadran semi-circulaire à
+   * aiguille) utilisé par tous les labs à 3 paliers (Faible/Modéré/Élevé,
+   * Mineur/Majeur/Critique...). Un seul endroit à maintenir pour que ces
+   * labs restent visuellement cohérents.
+   *
+   * tiers: tableau de 3 objets { key, label, emoji, color } dans l'ordre
+   * bas -> milieu -> haut (ex. Faible, Modéré, Élevé).
+   * ------------------------------------------------------------------- */
+  const GAUGE_ANGLES = { 0: { arc: "M20,100 A80,80 0 0,1 60,30.7", labelX: 46, labelY: 78 }, 1: { arc: "M60,30.7 A80,80 0 0,1 140,30.7", labelX: 100, labelY: 55 }, 2: { arc: "M140,30.7 A80,80 0 0,1 180,100", labelX: 154, labelY: 78 } };
+  const GAUGE_NEEDLE_ROT = { 0: -60, 1: 0, 2: 60 };
+
+  function gaugeMarkup(tiers) {
+    const arcs = tiers
+      .map(
+        (t, i) => `<path class="gauge-zone" data-key="${t.key}" data-idx="${i}" d="${GAUGE_ANGLES[i].arc}" fill="none" stroke="${t.color}" stroke-width="26" stroke-linecap="butt" style="cursor:pointer; opacity:.32; transition:opacity .15s ease, stroke-width .15s ease;"></path>`
+      )
+      .join("");
+    const labels = tiers
+      .map(
+        (t, i) => `<text x="${GAUGE_ANGLES[i].labelX}" y="${GAUGE_ANGLES[i].labelY}" text-anchor="middle" font-family="var(--mono)" font-size="9.5" font-weight="700" fill="${t.color}" style="pointer-events:none;">${escapeHtml(t.emoji || "")}</text>`
+      )
+      .join("");
+    return `
+      <div class="risk-gauge" style="max-width:280px; margin:0 auto;">
+        <svg viewBox="0 0 200 112" style="width:100%; display:block;">
+          ${arcs}
+          ${labels}
+          <g id="gauge-needle" style="transform-origin:100px 100px; transform:rotate(0deg); opacity:0; transition:transform .5s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;">
+            <line x1="100" y1="100" x2="100" y2="62" stroke="var(--navy)" stroke-width="5" stroke-linecap="round"></line>
+          </g>
+          <circle cx="100" cy="100" r="7" fill="var(--navy)"></circle>
+        </svg>
+        <div id="gauge-caption" style="text-align:center; font-family:var(--mono); font-size:12px; color:var(--gray); margin-top:2px; min-height:16px;"></div>
+      </div>`;
+  }
+
+  // À appeler une fois le HTML de gaugeMarkup() inséré dans le DOM. onSelect
+  // reçoit la clé du palier choisi. Retourne une fonction setSelected(key)
+  // que l'appelant peut utiliser pour resynchroniser l'affichage si besoin.
+  function bindGauge(container, tiers, onSelect) {
+    const needle = container.querySelector("#gauge-needle");
+    const caption = container.querySelector("#gauge-caption");
+    function setSelected(key) {
+      const idx = tiers.findIndex((t) => t.key === key);
+      container.querySelectorAll(".gauge-zone").forEach((el, i) => {
+        const active = i === idx;
+        el.style.opacity = active ? "1" : ".32";
+        el.style.strokeWidth = active ? "30" : "26";
+      });
+      if (idx >= 0) {
+        needle.style.transform = `rotate(${GAUGE_NEEDLE_ROT[idx]}deg)`;
+        needle.style.opacity = "1";
+        if (caption) caption.textContent = tiers[idx].label;
+      }
+    }
+    container.querySelectorAll(".gauge-zone").forEach((el) => {
+      el.onclick = () => {
+        const key = el.dataset.key;
+        setSelected(key);
+        onSelect(key);
+      };
+    });
+    return setSelected;
+  }
+
+  /* ---------------------------------------------------------------------
    * Navigation entre les grands écrans de l'application
    * ------------------------------------------------------------------- */
   function goTo(view) {
@@ -397,6 +463,7 @@ const LabEngine = (function () {
   return {
     init, goTo, startGame, submitResult, attemptFormateurAccess,
     copyShareUrl, exportCsv, resetDatabase, escapeHtml,
+    gaugeMarkup, bindGauge,
   };
 })();
 

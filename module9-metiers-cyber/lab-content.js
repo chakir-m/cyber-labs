@@ -8,10 +8,10 @@
 // différent (accompagnement externe vs responsabilité stratégique interne).
 
 const METIERS = [
-  { key: "rssi", label: "RSSI" },
-  { key: "soc", label: "Analyste SOC" },
-  { key: "pentester", label: "Testeur d'intrusion (pentester)" },
-  { key: "grc", label: "Consultant GRC" },
+  { key: "rssi", label: "RSSI", icon: "👔" },
+  { key: "soc", label: "Analyste SOC", icon: "🖥️" },
+  { key: "pentester", label: "Testeur d'intrusion (pentester)", icon: "🎯" },
+  { key: "grc", label: "Consultant GRC", icon: "📊" },
 ];
 const METIER_LABEL = Object.fromEntries(METIERS.map((m) => [m.key, m.label]));
 
@@ -167,8 +167,12 @@ window.LabConfig = {
 /* ============ Logique du quiz (interne à ce lab) ============ */
 function renderScenario(container) {
   const s = SCENARIOS[idx];
-  const metierBtnsHtml = METIERS.map(
-    (m) => `<button class="toggle-btn metier-btn" data-val="${m.key}" style="background:var(--paper); color:var(--navy); border:1.5px solid #DCD7C8;">${m.label}</button>`
+  const metierCardsHtml = METIERS.map(
+    (m) => `
+      <button class="metier-btn card-choice-row" data-val="${m.key}" style="display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:14px 16px; transition:border-color .15s ease, background .15s ease;">
+        <span style="font-size:24px; flex:none;">${m.icon}</span>
+        <span class="card-choice-label" style="font-size:14px; font-weight:600; color:var(--navy);">${m.label}</span>
+      </button>`
   ).join("");
 
   container.innerHTML = `
@@ -179,22 +183,22 @@ function renderScenario(container) {
     <div class="card-shell fade-in" style="max-width:500px; margin:0 auto;">
       <span class="eyebrow">Quel métier de la cybersécurité ?</span>
       <p class="desc" style="font-size:15px; color:var(--ink); margin-bottom:20px;">${LabEngine.escapeHtml(s.text)}</p>
-      <div class="toggle-row" id="metier-row" style="flex-direction:column; gap:10px; margin-bottom:0;">${metierBtnsHtml}</div>
+      <div id="metier-row" style="display:flex; flex-direction:column; gap:10px; margin-bottom:0;">${metierCardsHtml}</div>
       <button class="btn-primary" id="validate-btn" disabled style="margin-top:18px;">Valider ma réponse</button>
       <div id="feedback-zone" style="margin-top:16px;"></div>
     </div>
+    <style>
+      .card-choice-row:hover{ border-color:var(--gold) !important; }
+      .card-choice-row.selected{ background:var(--navy) !important; border-color:var(--navy) !important; }
+      .card-choice-row.selected .card-choice-label{ color:#fff !important; }
+    </style>
   `;
 
   let chosen = null;
   container.querySelectorAll("#metier-row .metier-btn").forEach((b) => {
     b.onclick = () => {
       chosen = b.dataset.val;
-      container.querySelectorAll("#metier-row .metier-btn").forEach((x) => {
-        const active = x === b;
-        x.style.background = active ? "var(--navy)" : "var(--paper)";
-        x.style.color = active ? "#fff" : "var(--navy)";
-        x.style.borderColor = active ? "var(--navy)" : "#DCD7C8";
-      });
+      container.querySelectorAll("#metier-row .metier-btn").forEach((x) => x.classList.toggle("selected", x === b));
       document.getElementById("validate-btn").disabled = false;
     };
   });

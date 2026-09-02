@@ -47,6 +47,12 @@ function tierOf(score) {
   return "eleve";
 }
 const TIER_LABEL = { faible: "Faible", moyen: "Moyen", eleve: "Élevé" };
+const GAUGE_TIERS = [
+  { key: "faible", label: "🟢 Faible", emoji: "FAIBLE", color: "var(--low)" },
+  { key: "moyen", label: "🟠 Moyen", emoji: "MOYEN", color: "var(--mid)" },
+  { key: "eleve", label: "🔴 Élevé", emoji: "ÉLEVÉ", color: "var(--high)" },
+];
+
 
 let step = "estimate"; // "estimate" | "rank"
 let sIdx = 0;
@@ -249,7 +255,8 @@ function renderEstimateScreen(container) {
 
     const zone = document.getElementById("feedback-zone");
     zone.innerHTML = `
-      <div style="background:${tierMatch ? "#E7F3EC" : "#FBEAEA"}; border-radius:12px; padding:14px 16px;">
+      ${LabEngine.gaugeMarkup(GAUGE_TIERS)}
+      <div style="background:${tierMatch ? "#E7F3EC" : "#FBEAEA"}; border-radius:12px; padding:14px 16px; margin-top:12px;">
         <div style="font-weight:700; color:${tierMatch ? "var(--low)" : "var(--high)"}; margin-bottom:6px;">
           Votre niveau : ${TIER_LABEL[tier]} (${score}/27) — ${tierMatch ? "identique à l'estimation experte ✓" : "l'estimation experte est " + TIER_LABEL[expertTier]}
         </div>
@@ -259,6 +266,10 @@ function renderEstimateScreen(container) {
         ${sIdx === SCENARIOS.length - 1 ? "Passer au classement final →" : "Scénario suivant →"}
       </button>
     `;
+    const setGaugeSelected = LabEngine.bindGauge(zone, GAUGE_TIERS, () => {});
+    setGaugeSelected(tier);
+    zone.querySelectorAll(".gauge-zone").forEach((el) => (el.style.pointerEvents = "none"));
+
     document.getElementById("next-btn").onclick = () => {
       sIdx++;
       if (sIdx < SCENARIOS.length) {
