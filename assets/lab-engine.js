@@ -13,6 +13,7 @@
 
 const LabEngine = (function () {
   let pseudo = "";
+  const PARTICIPANT_NAME_KEY = "participant_name"; // même clé que assets/commencer.html
   let pollTimer = null;
   let currentRecords = []; // dernier jeu de résultats chargé (pour l'export CSV)
 
@@ -153,7 +154,55 @@ const LabEngine = (function () {
     }
     if (view === "pseudo") {
       const input = document.getElementById("pseudo-input");
-      if (input) input.focus();
+      if (input) {
+        let remembered = null;
+        try {
+          remembered = window.localStorage.getItem(PARTICIPANT_NAME_KEY);
+        } catch (e) {
+          /* localStorage indisponible (navigation privée stricte, etc.) — on continue sans */
+        }
+        if (remembered && !input.value) {
+          input.value = remembered;
+          const btn = document.getElementById("pseudo-btn");
+          if (btn) btn.disabled = false;
+        }
+        showRememberedNameHelper(input, remembered);
+        input.focus();
+        input.select();
+      }
+    }
+  }
+
+  // Insère (une seule fois) un petit texte sous le champ pseudo indiquant que
+  // le nom a été retrouvé automatiquement, avec un lien pour le changer si ce
+  // n'est pas la bonne personne sur cet appareil.
+  function showRememberedNameHelper(input, remembered) {
+    let helper = document.getElementById("remembered-name-helper");
+    if (!helper) {
+      helper = document.createElement("div");
+      helper.id = "remembered-name-helper";
+      helper.style.cssText = "margin-top:8px; font-size:12px; color:var(--gray); text-align:left;";
+      input.insertAdjacentElement("afterend", helper);
+    }
+    if (remembered) {
+      helper.style.display = "block";
+      helper.innerHTML = `✓ Vous continuez en tant que <strong>${escapeHtml(remembered)}</strong> — <a href="#" id="clear-remembered-name" style="color:var(--navy); text-decoration:underline;">pas vous ?</a>`;
+      const clearLink = document.getElementById("clear-remembered-name");
+      if (clearLink) {
+        clearLink.onclick = (e) => {
+          e.preventDefault();
+          try {
+            window.localStorage.removeItem(PARTICIPANT_NAME_KEY);
+          } catch (err) {}
+          input.value = "";
+          const btn = document.getElementById("pseudo-btn");
+          if (btn) btn.disabled = true;
+          helper.style.display = "none";
+          input.focus();
+        };
+      }
+    } else {
+      helper.style.display = "none";
     }
   }
 
@@ -180,6 +229,11 @@ const LabEngine = (function () {
 
   function startGame() {
     pseudo = document.getElementById("pseudo-input").value.trim() || "Participant";
+    try {
+      window.localStorage.setItem(PARTICIPANT_NAME_KEY, pseudo);
+    } catch (e) {
+      /* localStorage indisponible — la mémorisation entre labs ne fonctionnera pas, mais le lab reste utilisable */
+    }
     goTo("game");
     const container = document.getElementById("game-container");
     container.innerHTML = "";

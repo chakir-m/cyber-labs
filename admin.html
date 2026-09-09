@@ -137,7 +137,8 @@
     <h3>⚠️ Effacer toutes les données et repartir à zéro</h3>
     <p>
       Cette action supprime <strong>définitivement</strong> les réponses de <strong>tous les participants</strong> sur
-      les <strong>20 labs</strong>, et reverrouille l'ensemble du parcours (comme au premier déploiement).
+      les <strong>21 labs</strong>, <strong>tous les comptes créés via commencer.html</strong>, et reverrouille l'ensemble
+      du parcours (comme au premier déploiement).
       À utiliser uniquement <strong>entre deux sessions de formation</strong> — par exemple avant d'accueillir un nouveau
       groupe — jamais en cours de session. Cette action est irréversible.
     </p>
@@ -194,9 +195,19 @@ async function fetchAllLabsData() {
   return result;
 }
 
-function buildParticipants(data) {
+function buildParticipants(data, registry) {
   const map = new Map();
   const labs = allLabs();
+
+  // D'abord les comptes créés via commencer.html (même sans avoir encore
+  // commencé un lab) — pour que le formateur voie qui s'est inscrit.
+  Object.values(registry || {}).forEach((entry) => {
+    const display = (entry.displayName || "").trim();
+    if (!display) return;
+    const norm = display.toLowerCase();
+    if (!map.has(norm)) map.set(norm, { display, perLab: {}, registeredOnly: true });
+  });
+
   labs.forEach((l) => {
     (data[l.id] || []).forEach((record) => {
       const pseudo = (record.pseudo || "").trim();
@@ -204,6 +215,7 @@ function buildParticipants(data) {
       const norm = pseudo.toLowerCase();
       if (!map.has(norm)) map.set(norm, { display: pseudo, perLab: {} });
       const entry = map.get(norm);
+      entry.registeredOnly = false;
       const existing = entry.perLab[l.id];
       if (!existing || (record.ts || 0) > (existing.ts || 0)) {
         entry.perLab[l.id] = record; // garde la soumission la plus récente en cas de doublon
@@ -213,21 +225,34 @@ function buildParticipants(data) {
   return map;
 }
 
+async function fetchRegistry() {
+  try {
+    const snap = await db.ref("participants").get();
+    return snap.exists() ? snap.val() : {};
+  } catch (e) {
+    console.error("Erreur de lecture du registre des comptes :", e);
+    return {};
+  }
+}
+
 function renderStats(data, parts) {
   const labs = allLabs();
   const totalResponses = labs.reduce((s, l) => s + (data[l.id] || []).length, 0);
   const totalParticipants = parts.size;
   let fullyCompleted = 0;
+  let registeredOnly = 0;
   parts.forEach((p) => {
     if (Object.keys(p.perLab).length === labs.length) fullyCompleted++;
+    if (p.registeredOnly) registeredOnly++;
   });
-  const completionRate = totalParticipants > 0 ? Math.round((fullyCompleted / totalParticipants) * 100) : 0;
+  const activeParticipants = totalParticipants - registeredOnly;
+  const completionRate = activeParticipants > 0 ? Math.round((fullyCompleted / activeParticipants) * 100) : 0;
 
   document.getElementById("stat-row").innerHTML = `
-    <div class="stat-card accent"><div class="n">${totalParticipants}</div><div class="l">Participants distincts (tous labs confondus)</div></div>
+    <div class="stat-card accent"><div class="n">${totalParticipants}</div><div class="l">Comptes créés au total${registeredOnly > 0 ? ` (dont ${registeredOnly} n'ont encore fait aucun lab)` : ""}</div></div>
     <div class="stat-card"><div class="n">${totalResponses}</div><div class="l">Réponses enregistrées au total</div></div>
-    <div class="stat-card"><div class="n">${fullyCompleted}</div><div class="l">Ont terminé les 20 labs</div></div>
-    <div class="stat-card"><div class="n">${completionRate}%</div><div class="l">Taux de complétion globale</div></div>
+    <div class="stat-card"><div class="n">${fullyCompleted}</div><div class="l">Ont terminé les ${labs.length} labs</div></div>
+    <div class="stat-card"><div class="n">${completionRate}%</div><div class="l">Taux de complétion (parmi ceux ayant commencé)</div></div>
   `;
 }
 
@@ -258,7 +283,7 @@ function renderMatrix(parts, filter) {
         .join("");
       return `
         <tr>
-          <td class="pseudo-cell">${LabEngineEscape(p.display)}<br>
+          <td class="pseudo-cell">${LabEngineEscape(p.display)}${p.registeredOnly ? ' <span style="font-family:var(--mono); font-size:9.5px; color:var(--gold-text); background:#FFF3D6; padding:1px 6px; border-radius:8px;">inscrit(e)</span>' : ""}<br>
             <span class="completion-bar-mini"><span style="width:${pct}%;"></span></span>
             <span style="font-family:var(--mono); font-size:10px; color:var(--gray);"> ${count}/${labs.length}</span>
           </td>
@@ -325,15 +350,16 @@ function searchCertificate() {
 
 async function loadAndRender() {
   document.getElementById("matrix-wrap").innerHTML = `<div class="loading-note">Chargement…</div>`;
-  labsData = await fetchAllLabsData();
-  participants = buildParticipants(labsData);
+  const [data, registry] = await Promise.all([fetchAllLabsData(), fetchRegistry()]);
+  labsData = data;
+  participants = buildParticipants(labsData, registry);
   renderStats(labsData, participants);
   renderMatrix(participants, document.getElementById("search-input").value.trim());
 }
 
 async function startNewSession() {
   const ok1 = confirm(
-    "ATTENTION : cette action va supprimer DÉFINITIVEMENT les réponses de TOUS les participants sur les 20 labs, et reverrouiller l'ensemble du parcours.\n\nÀ utiliser uniquement entre deux sessions de formation. Continuer ?"
+    `ATTENTION : cette action va supprimer DÉFINITIVEMENT les réponses de TOUS les participants sur les ${allLabs().length} labs, et reverrouiller l'ensemble du parcours.\n\nÀ utiliser uniquement entre deux sessions de formation. Continuer ?`
   );
   if (!ok1) return;
   const ok2 = confirm("Dernière confirmation : voulez-vous vraiment tout effacer ? Cette action est irréversible.");
@@ -348,6 +374,7 @@ async function startNewSession() {
       await db.ref(`labs/${labId}/shared`).remove();
       await db.ref(`labs/${labId}/private`).remove();
     }
+    await db.ref("participants").remove();
     await window.CourseLock.resetAll();
     statusEl.innerHTML = `<div class="status-msg ok">✓ Nouvelle session prête : toutes les données ont été effacées, tous les labs sont reverrouillés.</div>`;
     await loadAndRender();

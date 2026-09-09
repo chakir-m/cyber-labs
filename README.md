@@ -72,6 +72,10 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
            ".read": true,
            ".write": true
          }
+       },
+       "participants": {
+         ".read": true,
+         ".write": true
        }
      }
    }
@@ -84,10 +88,18 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
    > Sans lui, Firebase refuse silencieusement la lecture/écriture sur ce
    > chemin (erreur `permission_denied` visible dans la console développeur),
    > et `labs.html` affiche un bandeau rouge d'avertissement pour vous le
-   > signaler. Il suffit de coller les règles complètes ci-dessus (avec les
-   > deux blocs `"labs"` et `"course"`) dans **Realtime Database > Règles**
-   > puis de cliquer **Publier** — aucune autre action nécessaire, l'effet
-   > est immédiat.
+   > signaler.
+
+   > **⚠️ Si vous avez créé votre base Firebase avant l'ajout du système de
+   > compte participant**, vos règles actuelles ne contiennent probablement
+   > pas le bloc `"participants"` ci-dessus — il est nécessaire pour que la
+   > création de compte (`commencer.html`) fonctionne. Sans lui, la création
+   > de compte affichera une erreur de permission.
+
+   > Dans les deux cas, il suffit de recoller les règles complètes ci-dessus
+   > (les trois blocs `"labs"`, `"course"` et `"participants"`) dans
+   > **Realtime Database > Règles** puis de cliquer **Publier** — aucune
+   > autre action nécessaire, l'effet est immédiat.
 
    > **Note sur la sécurité.** Ces règles sont volontairement ouvertes en
    > lecture/écriture pour rester simples à utiliser en salle de formation,
@@ -169,6 +181,35 @@ en amont.
 La page `labs.html` fonctionne aussi en accordéon : les 10 modules sont
 repliés par défaut (seul l'en-tête est visible) et se déplient
 individuellement au clic, pour ne faire défiler que ce qui vous intéresse.
+
+---
+
+## 3bis-bis. Créer son compte en amont (`commencer.html`)
+
+Page publique à partager en tout premier (avant même le premier module),
+par exemple via un QR code projeté en salle. Le participant y choisit
+simplement un prénom :
+
+- Le nom est vérifié en direct dans un petit registre Firebase
+  (`participants/...`) pour éviter que deux personnes utilisent
+  accidentellement le même nom sans le savoir.
+- S'il est déjà pris, le participant peut soit confirmer que c'est bien lui
+  (utile s'il revient sur un nouvel appareil), soit se voir proposer une
+  variante (ex. « Ali 42 »).
+- Une fois validé, le nom est mémorisé sur l'appareil (`localStorage`) :
+  **il n'a plus jamais besoin de le retaper** sur aucun des 21 labs, ni le
+  jour 1 ni le jour 2 — tant qu'il utilise le même téléphone ou ordinateur.
+
+Le nom saisi sur `commencer.html` utilise la **même mémorisation locale**
+que celle des labs eux-mêmes : un participant qui n'est jamais passé par
+`commencer.html` et tape directement son nom sur un lab continue de
+fonctionner exactement comme avant (rétrocompatible), simplement sans la
+vérification d'unicité en amont.
+
+> ⚠️ Comme pour l'espace formateur, il n'y a pas de mot de passe associé à
+> ce nom — c'est une convenance, pas une sécurité. Le seul but est d'éviter
+> les doublons accidentels et de simplifier la continuité d'un lab à
+> l'autre, pas d'authentifier qui que ce soit.
 
 ---
 
@@ -281,6 +322,7 @@ Plusieurs labs utilisent des composants graphiques fournis par `assets/lab-engin
 /
 ├── index.html                          ← page d'accueil PAR DÉFAUT (présentation de la formation 2 jours)
 ├── programme.html                      ← plaquette détaillée du programme (planning J1/J2, tableau des labs)
+├── commencer.html                      ← création de compte participant (à partager en premier)
 ├── labs.html                           ← hub listant tous les labs, classés par module (verrouillage inclus)
 ├── admin.html                          ← espace formateur avancé (vue d'ensemble, export CSV, nouvelle session)
 ├── certificat.html                     ← vérification publique + certificat de réussite (participants)

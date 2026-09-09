@@ -177,6 +177,9 @@
   <div class="firebase-error-banner" id="firebase-error-banner">
     ⚠️ Impossible de lire l'état des labs sur Firebase. Vos règles Realtime Database autorisent probablement le chemin <code>labs/...</code> mais pas <code>course/...</code> — ajoutez-y les mêmes règles (voir la section « Firebase » du README) puis republiez. En attendant, les participants ne sont <strong>pas bloqués</strong> par précaution.
   </div>
+  <div class="firebase-error-banner" id="no-account-banner" style="background:#FFF8E8; color:#7A5C1E;">
+    👋 Première visite ? <a href="./commencer.html" style="color:#7A5C1E; font-weight:700; text-decoration:underline;">Créez votre compte en 10 secondes</a> pour ne plus jamais retaper votre nom sur les labs.
+  </div>
   <div class="wrap" id="modules-wrap">
     <div class="loading-note">Chargement de l'état des labs…</div>
   </div>
@@ -362,6 +365,7 @@ async function boot() {
   document.getElementById("formateur-toggle-btn").addEventListener("click", toggleFormateurMode);
   document.getElementById("global-unlock-btn").addEventListener("click", () => unlockAllGlobal(true));
   document.getElementById("global-lock-btn").addEventListener("click", () => unlockAllGlobal(false));
+  showNoAccountBannerIfNeeded();
   try {
     unlockedMap = await window.CourseLock.getUnlockedMap();
   } catch (e) {
@@ -377,6 +381,14 @@ async function boot() {
     showFirebaseErrorBannerIfNeeded();
     render();
   });
+}
+
+function showNoAccountBannerIfNeeded() {
+  let hasName = false;
+  try {
+    hasName = !!localStorage.getItem("participant_name");
+  } catch (e) {}
+  document.getElementById("no-account-banner").classList.toggle("visible", !hasName);
 }
 
 function showFirebaseErrorBannerIfNeeded() {
