@@ -26,7 +26,10 @@
     console.error("[lab-storage] firebaseConfig introuvable — vérifiez que assets/firebase-config.js est chargé avant ce fichier.");
   }
 
-  firebase.initializeApp(firebaseConfig);
+  // assets/candidate-auth.js (chargé juste avant ce fichier désormais) a pu
+  // déjà initialiser l'app Firebase — on évite une double initialisation,
+  // qui lèverait une erreur ("Firebase App named '[DEFAULT]' already exists").
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const LAB_ID = window.LAB_ID || "lab-sans-nom";
   const PENDING_KEY = "lab_pending_writes";

@@ -163,6 +163,7 @@
     <h1>Labs interactifs</h1>
     <p>Retrouvez ici l'ensemble des exercices ludiques du programme, classés par module. Touchez un module pour dérouler ses labs.</p>
     <div class="formateur-bar">
+      <a class="formateur-btn" id="mon-parcours-btn" href="./mon-parcours.html">📈 Mon parcours</a>
       <button class="formateur-btn" id="formateur-toggle-btn">🔑 Mode formateur</button>
     </div>
   </div>
@@ -178,15 +179,17 @@
     ⚠️ Impossible de lire l'état des labs sur Firebase. Vos règles Realtime Database autorisent probablement le chemin <code>labs/...</code> mais pas <code>course/...</code> — ajoutez-y les mêmes règles (voir la section « Firebase » du README) puis republiez. En attendant, les participants ne sont <strong>pas bloqués</strong> par précaution.
   </div>
   <div class="firebase-error-banner" id="no-account-banner" style="background:#FFF8E8; color:#7A5C1E;">
-    👋 Première visite ? <a href="./commencer.html" style="color:#7A5C1E; font-weight:700; text-decoration:underline;">Créez votre compte en 10 secondes</a> pour ne plus jamais retaper votre nom sur les labs.
+    👋 Première visite ? <a href="./commencer.html" style="color:#7A5C1E; font-weight:700; text-decoration:underline;">Créez votre compte</a> pour accéder aux labs et suivre votre progression.
   </div>
   <div class="wrap" id="modules-wrap">
     <div class="loading-note">Chargement de l'état des labs…</div>
   </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="./assets/firebase-config.js"></script>
+<script src="./assets/candidate-auth.js"></script>
 <script src="./assets/course-lock.js"></script>
 <script src="./assets/formateur-auth.js"></script>
 <script src="./assets/modules-data.js"></script>
@@ -195,8 +198,19 @@
 // assets/modules-data.js — modifiez ce fichier pour ajouter un nouveau lab.
 
 let unlockedMap = {};       // { labId: true } — rempli depuis Firebase
-let isFormateur = false;    // mode formateur actif dans CET onglet
-let openModules = new Set(); // modules actuellement dépliés (état d'affichage local)
+// Mode formateur et modules dépliés sont mémorisés dans sessionStorage pour
+// qu'un simple rafraîchissement de page (F5) ne renvoie pas le formateur à
+// l'état initial (accordéons refermés, mode formateur désactivé).
+let isFormateur = sessionStorage.getItem("formateur_ok") === "1" && sessionStorage.getItem("labs_formateur_mode") === "1";
+let openModules = new Set(
+  (() => { try { return JSON.parse(sessionStorage.getItem("labs_open_modules") || "[]"); } catch (e) { return []; } })()
+);
+function persistUiState() {
+  try {
+    sessionStorage.setItem("labs_formateur_mode", isFormateur ? "1" : "0");
+    sessionStorage.setItem("labs_open_modules", JSON.stringify([...openModules]));
+  } catch (e) {}
+}
 
 function isLabUnlocked(labId) {
   return !!unlockedMap[labId];
@@ -205,6 +219,7 @@ function isLabUnlocked(labId) {
 function toggleModule(num) {
   if (openModules.has(num)) openModules.delete(num);
   else openModules.add(num);
+  persistUiState();
   render();
 }
 
@@ -281,6 +296,7 @@ async function toggleFormateurMode() {
   document.getElementById("formateur-toggle-btn").textContent = isFormateur ? "🔑 Quitter le mode formateur" : "🔑 Mode formateur";
   document.getElementById("formateur-banner").classList.toggle("visible", isFormateur);
   document.getElementById("global-actions").classList.toggle("visible", isFormateur);
+  persistUiState();
   render();
 }
 
@@ -365,6 +381,12 @@ async function boot() {
   document.getElementById("formateur-toggle-btn").addEventListener("click", toggleFormateurMode);
   document.getElementById("global-unlock-btn").addEventListener("click", () => unlockAllGlobal(true));
   document.getElementById("global-lock-btn").addEventListener("click", () => unlockAllGlobal(false));
+  // Restaure l'état formateur/accordéons mémorisé avant un éventuel
+  // rafraîchissement de page (voir la déclaration de isFormateur ci-dessus).
+  document.getElementById("formateur-toggle-btn").classList.toggle("active", isFormateur);
+  document.getElementById("formateur-toggle-btn").textContent = isFormateur ? "🔑 Quitter le mode formateur" : "🔑 Mode formateur";
+  document.getElementById("formateur-banner").classList.toggle("visible", isFormateur);
+  document.getElementById("global-actions").classList.toggle("visible", isFormateur);
   showNoAccountBannerIfNeeded();
   try {
     unlockedMap = await window.CourseLock.getUnlockedMap();

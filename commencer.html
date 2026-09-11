@@ -35,29 +35,33 @@
   .hero h1{font-family:var(--serif); font-size:clamp(26px,4.5vw,36px); font-weight:700; margin:12px 0 10px;}
   .hero p{color:var(--ice); font-size:14.5px; max-width:32em; margin:0 auto;}
 
-  .wrap{max-width:480px; margin:0 auto; padding:36px 20px 80px;}
+  .wrap{max-width:460px; margin:0 auto; padding:36px 20px 80px;}
+
+  .tabs{display:flex; gap:8px; margin-bottom:20px; background:#fff; border:1.5px solid #E4E0D5; border-radius:12px; padding:5px;}
+  .tab-btn{flex:1; padding:11px; border-radius:8px; font-weight:600; font-size:13.5px; color:var(--gray); background:transparent;}
+  .tab-btn.active{background:var(--navy); color:#fff;}
 
   .card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:32px 28px;}
   .card h2{font-family:var(--serif); font-size:20px; color:var(--navy); margin-bottom:8px; text-align:center;}
   .card p.desc{font-size:13.5px; color:var(--gray); text-align:center; margin-bottom:22px; line-height:1.6;}
 
-  input[type=text]{
-    width:100%; padding:15px 16px; border-radius:10px; border:1.5px solid #DCD7C8; font-size:17px;
-    font-family:inherit; text-align:center;
+  label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--gray); margin-bottom:6px; margin-top:14px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=email], input[type=password]{
+    width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid #DCD7C8; font-size:15px;
+    font-family:inherit;
   }
-  input[type=text]:focus{outline:none; border-color:var(--navy);}
+  input:focus{outline:none; border-color:var(--navy);}
 
   .btn-primary{
-    margin-top:16px; width:100%; padding:15px 18px; border-radius:10px; background:var(--navy); color:#fff;
+    margin-top:20px; width:100%; padding:15px 18px; border-radius:10px; background:var(--navy); color:#fff;
     font-weight:600; font-size:15px;
   }
   .btn-primary:hover{background:var(--navy-dark);}
   .btn-primary:disabled{background:#C7C9D6; cursor:not-allowed;}
-  .btn-ghost{
-    margin-top:10px; width:100%; padding:13px 18px; border-radius:10px; background:transparent; color:var(--navy);
-    font-weight:600; font-size:14px; border:1.5px solid #DCD7C8;
-  }
-  .btn-ghost:hover{border-color:var(--navy);}
+
+  .link-row{margin-top:14px; text-align:center; font-size:13px;}
+  .link-row a, .link-row button.linklike{color:var(--navy); font-weight:600; text-decoration:underline; background:none; font-size:13px;}
 
   .status-msg{margin-top:14px; font-size:13px; padding:12px 14px; border-radius:10px; text-align:left; line-height:1.6;}
   .status-msg.err{background:#FBEAEA; color:#8A2E27;}
@@ -79,194 +83,148 @@
   <a class="back-link" href="./index.html">← Retour à l'accueil</a>
   <div class="badge-icon"></div>
   <div class="eyebrow">Les fondamentaux de la cybersécurité</div>
-  <h1>Rejoindre la formation</h1>
-  <p>Choisissez le nom que vous utiliserez sur tous les labs — dix secondes, aucun mot de passe à retenir.</p>
+  <h1 id="hero-title">Rejoindre la formation</h1>
+  <p id="hero-sub">Créez votre compte pour accéder aux labs, suivre votre progression et récupérer votre certificat en fin de parcours.</p>
 </div>
 
 <div class="wrap">
-  <div class="card" id="form-card">
-    <h2>Comment vous appelle-t-on ?</h2>
-    <p class="desc">Un simple prénom suffit. Il sera mémorisé automatiquement sur cet appareil : vous n'aurez plus jamais besoin de le retaper.</p>
-    <input type="text" id="name-input" placeholder="Ex. Salma" maxlength="30" autocomplete="off">
-    <button class="btn-primary" id="create-btn" disabled>Créer mon compte →</button>
-    <div id="status-zone"></div>
-    <div class="privacy-note">🔒 Aucune donnée personnelle réelle n'est demandée : ce nom ne sert qu'à retrouver votre progression et générer votre certificat en fin de formation.</div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" id="tab-signup" data-tab="signup">Créer un compte</button>
+    <button class="tab-btn" id="tab-signin" data-tab="signin">Se connecter</button>
   </div>
 
-  <div class="card hidden" id="already-card">
+  <!-- ===================== INSCRIPTION ===================== -->
+  <div class="card" id="card-signup">
+    <h2>Créer mon compte</h2>
+    <p class="desc">Votre nom, un e-mail et un mot de passe — dix secondes, ça suffit pour tout le parcours.</p>
+    <label for="signup-name">Nom / prénom</label>
+    <input type="text" id="signup-name" placeholder="Ex. Salma Bennani" maxlength="60" autocomplete="name">
+    <label for="signup-email">E-mail</label>
+    <input type="email" id="signup-email" placeholder="vous@exemple.com" autocomplete="email">
+    <label for="signup-pwd">Mot de passe</label>
+    <input type="password" id="signup-pwd" placeholder="6 caractères minimum" autocomplete="new-password">
+    <button class="btn-primary" id="signup-btn">Créer mon compte →</button>
+    <div id="signup-status"></div>
+    <div class="privacy-note">🔒 Votre e-mail ne sert qu'à vous reconnecter et, si besoin, réinitialiser votre mot de passe — il n'est jamais partagé ni utilisé à d'autres fins.</div>
+  </div>
+
+  <!-- ===================== CONNEXION ===================== -->
+  <div class="card hidden" id="card-signin">
+    <h2>Me connecter</h2>
+    <p class="desc">Retrouvez votre progression sur n'importe quel appareil.</p>
+    <label for="signin-email">E-mail</label>
+    <input type="email" id="signin-email" placeholder="vous@exemple.com" autocomplete="email">
+    <label for="signin-pwd">Mot de passe</label>
+    <input type="password" id="signin-pwd" placeholder="Votre mot de passe" autocomplete="current-password">
+    <button class="btn-primary" id="signin-btn">Me connecter →</button>
+    <div class="link-row"><button class="linklike" id="forgot-btn">Mot de passe oublié ?</button></div>
+    <div id="signin-status"></div>
+  </div>
+
+  <!-- ===================== DÉJÀ CONNECTÉ(E) ===================== -->
+  <div class="card hidden" id="card-already">
     <div class="success-icon">👋</div>
-    <h2 style="margin-bottom:2px;">Vous êtes déjà inscrit(e)</h2>
+    <h2 style="margin-bottom:2px;">Vous êtes déjà connecté(e)</h2>
     <div class="welcome-name" id="already-name"></div>
-    <p class="desc">Cet appareil vous reconnaît déjà — vous pouvez continuer directement là où vous en étiez.</p>
-    <button class="btn-primary" id="continue-btn">Continuer vers les labs →</button>
-    <button class="btn-ghost" id="not-me-btn">Ce n'est pas moi — créer un autre compte</button>
+    <p class="desc">Continuez directement là où vous en étiez.</p>
+    <button class="btn-primary" id="continue-btn">Continuer vers mon parcours →</button>
+    <div class="link-row"><button class="linklike" id="logout-btn">Ce n'est pas moi — se déconnecter</button></div>
   </div>
 
-  <div class="card hidden" id="success-card">
-    <div class="success-icon">🎉</div>
-    <h2 style="margin-bottom:2px;">Compte créé !</h2>
-    <div class="welcome-name" id="success-name"></div>
-    <p class="desc">Votre nom est enregistré sur cet appareil. Rendez-vous sur la page des labs pour commencer — votre nom sera pré-rempli automatiquement partout.</p>
-    <a class="btn-primary" href="./labs.html" style="display:block; text-align:center; text-decoration:none;">Commencer les labs →</a>
-  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="./assets/firebase-config.js"></script>
+<script src="./assets/candidate-auth.js"></script>
 <script>
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const NAME_KEY = "participant_name"; // même clé que assets/lab-engine.js
-
-function normalize(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
+function nextUrl() {
+  const params = new URLSearchParams(location.search);
+  const next = params.get("next");
+  return next ? decodeURIComponent(next) : "./mon-parcours.html";
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+function setTab(tab) {
+  document.getElementById("tab-signup").classList.toggle("active", tab === "signup");
+  document.getElementById("tab-signin").classList.toggle("active", tab === "signin");
+  document.getElementById("card-signup").classList.toggle("hidden", tab !== "signup");
+  document.getElementById("card-signin").classList.toggle("hidden", tab !== "signin");
 }
+document.getElementById("tab-signup").onclick = () => setTab("signup");
+document.getElementById("tab-signin").onclick = () => setTab("signin");
 
-async function checkExisting(name) {
-  const key = normalize(name);
-  if (!key) return null;
-  try {
-    const snap = await db.ref(`participants/${encodeURIComponent(key)}`).get();
-    return snap.exists() ? snap.val() : null;
-  } catch (e) {
-    console.error("[commencer] Erreur de lecture du registre :", e);
-    return { _error: true };
-  }
-}
-
-async function registerName(name) {
-  const key = normalize(name);
-  try {
-    await db.ref(`participants/${encodeURIComponent(key)}`).set({ displayName: name, createdAt: Date.now() });
-    return true;
-  } catch (e) {
-    console.error("[commencer] Erreur d'enregistrement :", e);
-    return false;
-  }
-}
-
-function rememberLocally(name) {
-  try {
-    localStorage.setItem(NAME_KEY, name);
-  } catch (e) {
-    console.error("[commencer] localStorage indisponible :", e);
-  }
-}
-
-function showAlreadyRegistered(name) {
-  document.getElementById("form-card").classList.add("hidden");
-  document.getElementById("already-name").textContent = name;
-  document.getElementById("already-card").classList.remove("hidden");
-}
-
-function showSuccess(name) {
-  document.getElementById("form-card").classList.add("hidden");
-  document.getElementById("already-card").classList.add("hidden");
-  document.getElementById("success-name").textContent = name;
-  document.getElementById("success-card").classList.remove("hidden");
-}
-
-async function handleCreate() {
-  const input = document.getElementById("name-input");
-  const name = input.value.trim();
-  const statusZone = document.getElementById("status-zone");
-  const btn = document.getElementById("create-btn");
+document.getElementById("signup-btn").addEventListener("click", async () => {
+  const name = document.getElementById("signup-name").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const pwd = document.getElementById("signup-pwd").value;
+  const statusZone = document.getElementById("signup-status");
+  const btn = document.getElementById("signup-btn");
   statusZone.innerHTML = "";
-  if (!name) return;
-
-  btn.disabled = true;
-  btn.textContent = "Vérification…";
-
-  const existing = await checkExisting(name);
-
-  if (existing && existing._error) {
-    statusZone.innerHTML = `<div class="status-msg info">⚠️ Impossible de vérifier la disponibilité pour le moment (connexion instable). Vous pouvez continuer : votre nom sera simplement mémorisé sur cet appareil.</div>`;
-    rememberLocally(name);
-    setTimeout(() => showSuccess(name), 1400);
-    return;
-  }
-
-  if (existing) {
-    // Un nom identique existe déjà dans le registre — sans mot de passe, on ne
-    // peut pas vérifier avec certitude qu'il s'agit de la même personne. On
-    // laisse le choix, plutôt que de bloquer purement et simplement.
-    statusZone.innerHTML = `
-      <div class="status-msg info">
-        Le nom « ${escapeHtml(name)} » est déjà utilisé par quelqu'un sur cette formation.
-        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn-ghost" id="its-me-btn" style="margin-top:0; flex:1; min-width:140px;">C'est moi, continuer</button>
-          <button class="btn-ghost" id="try-other-btn" style="margin-top:0; flex:1; min-width:140px;">Choisir un autre nom</button>
-        </div>
-      </div>`;
-    btn.disabled = false;
-    btn.textContent = "Créer mon compte →";
-    document.getElementById("its-me-btn").onclick = () => {
-      rememberLocally(name);
-      showSuccess(name);
-    };
-    document.getElementById("try-other-btn").onclick = () => {
-      const suggestion = name + " " + Math.floor(10 + Math.random() * 89);
-      input.value = suggestion;
-      input.focus();
-      input.select();
-      statusZone.innerHTML = "";
-    };
-    return;
-  }
-
-  const ok = await registerName(name);
-  if (ok) {
-    rememberLocally(name);
-    showSuccess(name);
-  } else {
-    statusZone.innerHTML = `<div class="status-msg err">⚠️ Impossible d'enregistrer votre nom pour le moment (vérifiez votre connexion, ou les règles Firebase — voir le README, chemin "participants/..."). Vous pouvez réessayer.</div>`;
-    btn.disabled = false;
-    btn.textContent = "Créer mon compte →";
-  }
-}
-
-function boot() {
-  let existingLocal = null;
+  if (!name) { statusZone.innerHTML = `<div class="status-msg err">Merci d'indiquer votre nom.</div>`; return; }
+  if (!email) { statusZone.innerHTML = `<div class="status-msg err">Merci d'indiquer votre e-mail.</div>`; return; }
+  if (!pwd || pwd.length < 6) { statusZone.innerHTML = `<div class="status-msg err">Le mot de passe doit contenir au moins 6 caractères.</div>`; return; }
+  btn.disabled = true; btn.textContent = "Création en cours…";
   try {
-    existingLocal = localStorage.getItem(NAME_KEY);
-  } catch (e) {}
-
-  if (existingLocal) {
-    showAlreadyRegistered(existingLocal);
-    document.getElementById("continue-btn").onclick = () => {
-      window.location.href = "./labs.html";
-    };
-    document.getElementById("not-me-btn").onclick = () => {
-      try {
-        localStorage.removeItem(NAME_KEY);
-      } catch (e) {}
-      document.getElementById("already-card").classList.add("hidden");
-      document.getElementById("form-card").classList.remove("hidden");
-      document.getElementById("name-input").focus();
-    };
-    return;
+    await window.CandidateAuth.signUp(name, email, pwd);
+    location.href = nextUrl();
+  } catch (e) {
+    console.error("[commencer] Erreur d'inscription :", e);
+    statusZone.innerHTML = `<div class="status-msg err">${window.CandidateAuth.friendlyError(e)}</div>`;
+    btn.disabled = false; btn.textContent = "Créer mon compte →";
   }
+});
 
-  const input = document.getElementById("name-input");
-  const btn = document.getElementById("create-btn");
-  input.addEventListener("input", (e) => {
-    btn.disabled = e.target.value.trim().length === 0;
-  });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && e.target.value.trim().length > 0) handleCreate();
-  });
-  btn.addEventListener("click", handleCreate);
-  input.focus();
-}
+document.getElementById("signin-btn").addEventListener("click", async () => {
+  const email = document.getElementById("signin-email").value.trim();
+  const pwd = document.getElementById("signin-pwd").value;
+  const statusZone = document.getElementById("signin-status");
+  const btn = document.getElementById("signin-btn");
+  statusZone.innerHTML = "";
+  if (!email || !pwd) { statusZone.innerHTML = `<div class="status-msg err">Merci de renseigner e-mail et mot de passe.</div>`; return; }
+  btn.disabled = true; btn.textContent = "Connexion…";
+  try {
+    await window.CandidateAuth.signIn(email, pwd);
+    location.href = nextUrl();
+  } catch (e) {
+    console.error("[commencer] Erreur de connexion :", e);
+    statusZone.innerHTML = `<div class="status-msg err">${window.CandidateAuth.friendlyError(e)}</div>`;
+    btn.disabled = false; btn.textContent = "Me connecter →";
+  }
+});
 
-boot();
+document.getElementById("forgot-btn").addEventListener("click", async () => {
+  const email = document.getElementById("signin-email").value.trim();
+  const statusZone = document.getElementById("signin-status");
+  if (!email) { statusZone.innerHTML = `<div class="status-msg err">Indiquez d'abord votre e-mail ci-dessus, puis cliquez de nouveau sur « Mot de passe oublié ».</div>`; return; }
+  try {
+    await window.CandidateAuth.resetPassword(email);
+    statusZone.innerHTML = `<div class="status-msg ok">✓ E-mail de réinitialisation envoyé à ${email}. Vérifiez votre boîte de réception (et vos spams).</div>`;
+  } catch (e) {
+    statusZone.innerHTML = `<div class="status-msg err">${window.CandidateAuth.friendlyError(e)}</div>`;
+  }
+});
+
+document.getElementById("continue-btn").addEventListener("click", () => { location.href = nextUrl(); });
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await window.CandidateAuth.signOut();
+  document.getElementById("card-already").classList.add("hidden");
+  document.getElementById("tabs").classList.remove("hidden");
+  setTab("signin");
+});
+
+// Si déjà connecté(e), proposer de continuer directement plutôt que de
+// réafficher les formulaires (mais laisser le choix de se déconnecter).
+window.CandidateAuth.onAuthChange((user) => {
+  if (user) {
+    document.getElementById("tabs").classList.add("hidden");
+    document.getElementById("card-signup").classList.add("hidden");
+    document.getElementById("card-signin").classList.add("hidden");
+    document.getElementById("already-name").textContent = user.displayName || user.email;
+    document.getElementById("card-already").classList.remove("hidden");
+  }
+});
 </script>
 </body>
 </html>

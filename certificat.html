@@ -78,26 +78,21 @@
 <body>
 
 <div class="hero">
-  <a class="back-link" href="./index.html">← Retour à l'accueil</a>
+  <a class="back-link" href="./mon-parcours.html">← Retour à mon parcours</a>
   <div class="eyebrow">Les fondamentaux de la cybersécurité</div>
   <h1>Mon certificat</h1>
-  <p>Entrez le pseudo exact que vous avez utilisé sur les labs pour vérifier votre progression et obtenir votre certificat une fois les 21 labs terminés.</p>
+  <p>Votre progression est vérifiée automatiquement à partir de votre compte — le certificat apparaît ici dès que les 21 labs sont terminés.</p>
 </div>
 
 <div class="wrap">
-  <div class="search-card no-print">
-    <span style="font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray);">Vérification</span>
-    <input type="text" id="pseudo-input" placeholder="Votre pseudo exact (ex. Salma)">
-    <button class="btn-primary" id="check-btn">Vérifier ma progression</button>
-    <div id="error-zone"></div>
-  </div>
-
-  <div id="result-zone"></div>
+  <div id="result-zone"><div class="loading-note" style="text-align:center; padding:30px; color:var(--gray); font-family:var(--mono); font-size:12.5px;">Vérification de votre progression…</div></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="./assets/firebase-config.js"></script>
+<script src="./assets/candidate-auth.js"></script>
 <script src="./assets/modules-data.js"></script>
 <script>
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -113,9 +108,12 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-async function findParticipantRecords(pseudo) {
+// Ne retient que les enregistrements liés au compte connecté (par uid) — à
+// défaut de uid sur un vieil enregistrement, on retombe sur le pseudo exact
+// pour ne pas perdre la progression de réponses antérieures aux comptes.
+async function findParticipantRecords(user) {
   const labs = allLabs();
-  const norm = pseudo.trim().toLowerCase();
+  const norm = (user.displayName || "").trim().toLowerCase();
   const perLab = {};
   await Promise.all(
     labs.map(async (l) => {
@@ -127,9 +125,8 @@ async function findParticipantRecords(pseudo) {
         Object.keys(val).forEach((k) => {
           try {
             const rec = JSON.parse(val[k].value);
-            if ((rec.pseudo || "").trim().toLowerCase() === norm) {
-              if (!best || (rec.ts || 0) > (best.ts || 0)) best = rec;
-            }
+            const matches = rec.uid ? rec.uid === user.uid : (rec.pseudo || "").trim().toLowerCase() === norm;
+            if (matches) { if (!best || (rec.ts || 0) > (best.ts || 0)) best = rec; }
           } catch (e) { /* entrée corrompue, ignorée */ }
         });
         if (best) perLab[l.id] = best;
@@ -156,6 +153,7 @@ function renderProgress(pseudo, perLab, labs) {
       <p style="color:var(--gray); font-size:13.5px;">${count} / ${labs.length} labs terminés — le certificat apparaîtra automatiquement ici une fois les ${labs.length} labs complétés.</p>
       <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${pct}%;"></div></div>
       <ul class="progress-list">${items}</ul>
+      <a class="btn-ghost no-print" href="./mon-parcours.html" style="display:inline-block; margin-top:18px;">← Continuer les labs restants</a>
     </div>
   `;
 }
@@ -178,24 +176,15 @@ function renderCertificate(pseudo, perLab, labs) {
   `;
 }
 
-async function checkProgress() {
-  const pseudo = document.getElementById("pseudo-input").value.trim();
-  const errorZone = document.getElementById("error-zone");
+async function checkProgress(user) {
   const resultZone = document.getElementById("result-zone");
-  errorZone.innerHTML = "";
-  resultZone.innerHTML = "";
-  if (!pseudo) {
-    errorZone.innerHTML = `<div class="status-msg err">Merci de saisir votre pseudo.</div>`;
-    return;
-  }
-  document.getElementById("check-btn").textContent = "Vérification…";
-  document.getElementById("check-btn").disabled = true;
   try {
     const labs = allLabs();
-    const perLab = await findParticipantRecords(pseudo);
+    const pseudo = user.displayName || user.email;
+    const perLab = await findParticipantRecords(user);
     const count = Object.keys(perLab).length;
     if (count === 0) {
-      errorZone.innerHTML = `<div class="status-msg err">Aucune réponse trouvée pour « ${escapeHtml(pseudo)} ». Vérifiez que vous avez utilisé exactement le même pseudo sur tous les labs (majuscules/espaces compris).</div>`;
+      resultZone.innerHTML = `<div class="status-msg err">Aucune réponse trouvée pour votre compte pour le moment. Commencez par <a href="./mon-parcours.html" style="font-weight:600;">un premier lab</a>.</div>`;
     } else if (count === labs.length) {
       renderCertificate(pseudo, perLab, labs);
     } else {
@@ -203,16 +192,16 @@ async function checkProgress() {
     }
   } catch (e) {
     console.error(e);
-    errorZone.innerHTML = `<div class="status-msg err">⚠️ Impossible de vérifier votre progression pour le moment (problème de connexion). Réessayez dans un instant.</div>`;
+    resultZone.innerHTML = `<div class="status-msg err">⚠️ Impossible de vérifier votre progression pour le moment (problème de connexion). Réessayez dans un instant.</div>`;
   }
-  document.getElementById("check-btn").textContent = "Vérifier ma progression";
-  document.getElementById("check-btn").disabled = false;
 }
 
-document.getElementById("check-btn").addEventListener("click", checkProgress);
-document.getElementById("pseudo-input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") checkProgress();
-});
+async function boot() {
+  const user = await window.CandidateAuth.requireAuth();
+  if (!user) return; // redirection vers commencer.html en cours
+  await checkProgress(user);
+}
+boot();
 </script>
 </body>
 </html>

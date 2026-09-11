@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon parcours — Les Fondamentaux de la Cybersécurité</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#12173F; --gold:#C9A24B; --gold-light:#E8D5A3; --gold-text:#7A5C1E;
+    --ice:#CADCFC; --paper:#F5F3EE; --ink:#1A1F36; --gray:#6B7188;
+    --low:#4C8B6B; --mid:#C9A24B; --high:#B3261E;
+    --serif:'Fraunces', Georgia, serif; --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none;}
+  a{color:inherit;}
+  .hidden{display:none !important;}
+
+  .hero{
+    background:radial-gradient(120% 140% at 15% 0%, var(--navy) 0%, var(--navy-dark) 70%);
+    color:#fff; padding:40px 24px 34px;
+  }
+  .hero-top{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; max-width:900px; margin:0 auto 18px;}
+  .hero-top .back-link{font-family:var(--mono); font-size:11.5px; color:rgba(255,255,255,.6); text-decoration:none;}
+  .hero-top .back-link:hover{color:#fff;}
+  .hero-top .logout-btn{font-family:var(--mono); font-size:11.5px; color:var(--gold-light); border:1px solid rgba(201,162,75,.4); border-radius:20px; padding:6px 14px;}
+  .hero-top .logout-btn:hover{background:rgba(201,162,75,.12);}
+  .hero-body{max-width:900px; margin:0 auto; text-align:center;}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-light); font-weight:600;}
+  .hero h1{font-family:var(--serif); font-size:clamp(24px,4vw,34px); font-weight:700; margin:10px 0 18px;}
+
+  .progress-shell{max-width:520px; margin:0 auto;}
+  .progress-nums{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .progress-nums .big{font-family:var(--serif); font-size:30px; font-weight:700; color:var(--gold-light);}
+  .progress-nums .small{font-family:var(--mono); font-size:12px; color:var(--ice);}
+  .progress-bar-outer{height:12px; background:rgba(255,255,255,.14); border-radius:8px; overflow:hidden;}
+  .progress-bar-inner{height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-light)); border-radius:8px; transition:width .4s ease;}
+
+  .wrap{max-width:900px; margin:0 auto; padding:32px 20px 80px;}
+
+  .cta-row{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:30px;}
+  .cta-card{
+    flex:1; min-width:260px; background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:22px 24px;
+    display:flex; align-items:center; gap:16px;
+  }
+  .cta-card .glyph{flex:none; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;}
+  .cta-card.next .glyph{background:var(--navy); color:#fff;}
+  .cta-card.cert .glyph{background:var(--gold-light); color:var(--navy-dark);}
+  .cta-card.cert.locked .glyph{background:#EDEAE0; color:var(--gray);}
+  .cta-card h3{font-family:var(--serif); font-size:16.5px; color:var(--navy); margin-bottom:3px;}
+  .cta-card p{font-size:12.5px; color:var(--gray); line-height:1.5;}
+  .cta-card a.go-btn, .cta-card button.go-btn{
+    margin-left:auto; flex:none; font-family:var(--mono); font-size:11.5px; font-weight:600; color:#fff;
+    background:var(--navy); border-radius:20px; padding:9px 16px; text-decoration:none; white-space:nowrap;
+  }
+  .cta-card a.go-btn:hover, .cta-card button.go-btn:hover{background:var(--navy-dark);}
+  .cta-card button.go-btn:disabled{background:#C7C9D6; cursor:not-allowed;}
+
+  .section-title{
+    font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--gray);
+    margin:6px 0 14px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after{content:""; flex:1; height:1px; background:#E4E0D5;}
+
+  .module-group{margin-bottom:14px; border-radius:12px; overflow:hidden; border:1.5px solid #E4E0D5; background:#fff;}
+  .module-header{display:flex; align-items:center; gap:14px; padding:14px 18px; background:var(--paper);}
+  .module-header .module-num{
+    flex:none; width:32px; height:32px; border-radius:8px; background:var(--navy); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:700; font-size:12.5px;
+  }
+  .module-header .module-title{font-family:var(--serif); font-weight:600; font-size:15px; flex:1; color:var(--navy);}
+  .module-header .module-count{font-family:var(--mono); font-size:10.5px; color:var(--gray);}
+
+  .lab-row{display:flex; align-items:center; gap:14px; padding:13px 18px; border-top:1px solid #EDEAE0;}
+  .lab-icon{flex:none; width:32px; height:32px; border-radius:8px; background:var(--gold); color:var(--navy-dark); display:flex; align-items:center; justify-content:center; font-size:14px;}
+  .lab-row.done .lab-icon{background:var(--low); color:#fff;}
+  .lab-row.locked .lab-icon{background:#DCD7C8; color:var(--gray);}
+  .lab-title{font-weight:600; font-size:13.5px; color:var(--navy);}
+  .lab-sub{font-size:11.5px; color:var(--gray); margin-top:1px;}
+  .lab-status{margin-left:auto; flex:none; font-family:var(--mono); font-size:10.5px; display:flex; align-items:center; gap:6px;}
+  .lab-status.done{color:var(--low); font-weight:700;}
+  .lab-status.locked{color:var(--gray);}
+  .lab-status a.go{color:var(--navy); font-weight:700; text-decoration:none; background:var(--paper); border-radius:16px; padding:6px 12px;}
+  .lab-status a.go:hover{background:#E4E0D5;}
+
+  .loading-note{text-align:center; padding:40px; color:var(--gray); font-family:var(--mono); font-size:12.5px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <a class="back-link" href="./labs.html">← Voir tous les labs</a>
+    <button class="logout-btn" id="logout-btn">Se déconnecter</button>
+  </div>
+  <div class="hero-body">
+    <span class="eyebrow">Mon parcours</span>
+    <h1 id="greeting">Bonjour 👋</h1>
+    <div class="progress-shell">
+      <div class="progress-nums">
+        <span class="big" id="progress-count">0/21</span>
+        <span class="small" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cta-row">
+    <div class="cta-card next" id="cta-next">
+      <div class="glyph">▶</div>
+      <div>
+        <h3 id="next-title">Chargement…</h3>
+        <p id="next-sub">Un instant.</p>
+      </div>
+      <a class="go-btn hidden" id="next-btn" href="#">Continuer →</a>
+    </div>
+    <div class="cta-card cert locked" id="cta-cert">
+      <div class="glyph">🎓</div>
+      <div>
+        <h3>Certificat de réussite</h3>
+        <p id="cert-sub">Disponible une fois les 21 labs terminés.</p>
+      </div>
+      <a class="go-btn hidden" id="cert-btn" href="./certificat.html">Voir mon certificat →</a>
+    </div>
+  </div>
+
+  <div class="section-title">Détail par module</div>
+  <div id="modules-wrap"><div class="loading-note">Chargement de votre progression…</div></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="./assets/firebase-config.js"></script>
+<script src="./assets/candidate-auth.js"></script>
+<script src="./assets/course-lock.js"></script>
+<script src="./assets/modules-data.js"></script>
+<script>
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function allLabs() {
+  return MODULES_DATA.flatMap((m) => m.labs.map((l) => Object.assign({}, l, { moduleNum: m.num })));
+}
+
+// Retrouve, pour l'utilisateur connecté, le meilleur enregistrement pour
+// chaque lab. Priorité au champ "uid" (comptes créés après cette mise à
+// jour) ; à défaut, on retombe sur une correspondance de pseudo exact
+// (compatibilité avec des réponses enregistrées avant l'ajout des comptes).
+async function fetchMyProgress(user) {
+  const labs = allLabs();
+  const norm = (user.displayName || "").trim().toLowerCase();
+  const perLab = {};
+  await Promise.all(
+    labs.map(async (l) => {
+      try {
+        const snap = await db.ref(`labs/${l.id}/shared`).get();
+        if (!snap.exists()) return;
+        const val = snap.val();
+        let best = null;
+        Object.keys(val).forEach((k) => {
+          try {
+            const rec = JSON.parse(val[k].value);
+            const matches = rec.uid ? rec.uid === user.uid : (rec.pseudo || "").trim().toLowerCase() === norm;
+            if (matches) { if (!best || (rec.ts || 0) > (best.ts || 0)) best = rec; }
+          } catch (e) { /* entrée corrompue, ignorée */ }
+        });
+        if (best) perLab[l.id] = best;
+      } catch (e) {
+        console.error("Erreur de lecture pour", l.id, e);
+      }
+    })
+  );
+  return perLab;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function render(user, perLab, unlockedMap) {
+  const labs = allLabs();
+  const doneCount = Object.keys(perLab).length;
+  const pct = Math.round((doneCount / labs.length) * 100);
+
+  document.getElementById("greeting").textContent = "Bonjour, " + (user.displayName || user.email) + " 👋";
+  document.getElementById("progress-count").textContent = doneCount + "/" + labs.length;
+  document.getElementById("progress-pct").textContent = pct + "%";
+  document.getElementById("progress-bar").style.width = pct + "%";
+
+  // Prochain lab à faire : premier lab non terminé ET déverrouillé, dans
+  // l'ordre du programme. S'il n'y en a pas (tout fait, ou tout ce qui reste
+  // est verrouillé), on adapte le message.
+  const nextAvailable = labs.find((l) => !perLab[l.id] && !!unlockedMap[l.id]);
+  const nextLockedOnly = labs.find((l) => !perLab[l.id]);
+  const nextTitleEl = document.getElementById("next-title");
+  const nextSubEl = document.getElementById("next-sub");
+  const nextBtn = document.getElementById("next-btn");
+
+  if (doneCount === labs.length) {
+    nextTitleEl.textContent = "Parcours terminé !";
+    nextSubEl.textContent = "Vous avez complété les " + labs.length + " labs. Bravo.";
+    nextBtn.classList.add("hidden");
+  } else if (nextAvailable) {
+    nextTitleEl.textContent = nextAvailable.title;
+    nextSubEl.textContent = "Module " + nextAvailable.moduleNum + " · " + nextAvailable.sub;
+    nextBtn.href = nextAvailable.href;
+    nextBtn.textContent = "Commencer →";
+    nextBtn.classList.remove("hidden");
+  } else if (nextLockedOnly) {
+    nextTitleEl.textContent = nextLockedOnly.title;
+    nextSubEl.textContent = "🔒 Pas encore activé par votre formateur — revenez plus tard.";
+    nextBtn.classList.add("hidden");
+  }
+
+  const certCard = document.getElementById("cta-cert");
+  const certBtn = document.getElementById("cert-btn");
+  const certSub = document.getElementById("cert-sub");
+  if (doneCount === labs.length) {
+    certCard.classList.remove("locked");
+    certBtn.classList.remove("hidden");
+    certSub.textContent = "Félicitations — votre certificat est prêt.";
+  } else {
+    certCard.classList.add("locked");
+    certBtn.classList.add("hidden");
+    certSub.textContent = (labs.length - doneCount) + " lab" + (labs.length - doneCount > 1 ? "s" : "") + " restant" + (labs.length - doneCount > 1 ? "s" : "") + " avant de débloquer votre certificat.";
+  }
+
+  const wrap = document.getElementById("modules-wrap");
+  wrap.innerHTML = MODULES_DATA.map((m) => {
+    const rows = m.labs.map((l) => {
+      const done = !!perLab[l.id];
+      const unlocked = !!unlockedMap[l.id];
+      let statusHtml, rowClass;
+      if (done) {
+        rowClass = "done";
+        statusHtml = `<span class="lab-status done">✓ Terminé</span>`;
+      } else if (unlocked) {
+        rowClass = "";
+        statusHtml = `<span class="lab-status"><a class="go" href="${l.href}">Commencer →</a></span>`;
+      } else {
+        rowClass = "locked";
+        statusHtml = `<span class="lab-status locked">🔒 Pas encore activé</span>`;
+      }
+      return `
+        <div class="lab-row ${rowClass}">
+          <div class="lab-icon">${l.icon}</div>
+          <div>
+            <div class="lab-title">${l.title}</div>
+            <div class="lab-sub">${l.sub}</div>
+          </div>
+          ${statusHtml}
+        </div>`;
+    }).join("");
+    const doneInModule = m.labs.filter((l) => perLab[l.id]).length;
+    return `
+      <div class="module-group">
+        <div class="module-header">
+          <div class="module-num">${String(m.num).padStart(2, "0")}</div>
+          <div class="module-title">Module ${m.num} — ${m.title}</div>
+          <div class="module-count">${doneInModule}/${m.labs.length}</div>
+        </div>
+        ${rows}
+      </div>`;
+  }).join("");
+}
+
+async function boot() {
+  const user = await window.CandidateAuth.requireAuth();
+  if (!user) return; // redirection vers commencer.html en cours
+
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    await window.CandidateAuth.signOut();
+    location.href = "./commencer.html";
+  });
+
+  let unlockedMap = {};
+  try {
+    unlockedMap = await window.CourseLock.getUnlockedMap();
+  } catch (e) {
+    unlockedMap = {};
+  }
+  const perLab = await fetchMyProgress(user);
+  render(user, perLab, unlockedMap || {});
+}
+
+boot();
+</script>
+</body>
+</html>

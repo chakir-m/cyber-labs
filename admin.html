@@ -37,7 +37,7 @@
   .btn-primary{background:var(--navy); color:#fff; padding:12px 22px; border-radius:10px; font-weight:600; font-size:14px;}
   .btn-primary:hover{background:var(--navy-dark);}
 
-  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:32px;}
+  .stat-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:32px;}
   @media (max-width:700px){.stat-row{grid-template-columns:repeat(2,1fr);}}
   .stat-card{background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:20px 22px;}
   .stat-card .n{font-family:var(--serif); font-size:32px; font-weight:700; color:var(--navy);}
@@ -137,10 +137,16 @@
     <h3>⚠️ Effacer toutes les données et repartir à zéro</h3>
     <p>
       Cette action supprime <strong>définitivement</strong> les réponses de <strong>tous les participants</strong> sur
-      les <strong>21 labs</strong>, <strong>tous les comptes créés via commencer.html</strong>, et reverrouille l'ensemble
+      les <strong>21 labs</strong>, <strong>le registre des comptes</strong> (progression et fiche d'inscription), et reverrouille l'ensemble
       du parcours (comme au premier déploiement).
       À utiliser uniquement <strong>entre deux sessions de formation</strong> — par exemple avant d'accueillir un nouveau
       groupe — jamais en cours de session. Cette action est irréversible.
+    </p>
+    <p style="margin-top:-8px;">
+      ⚠️ <strong>Limite à connaître</strong> : les comptes candidats (e-mail + mot de passe) créés via Firebase Authentication
+      ne sont <strong>pas supprimés</strong> par ce bouton — seule leur fiche de progression l'est. Les participants pourront
+      donc se reconnecter avec leurs identifiants existants (progression repartie à zéro). Pour supprimer les comptes
+      eux-mêmes entre deux sessions, utilisez la console Firebase (Authentication &gt; Users).
     </p>
     <button class="btn-danger" id="new-session-btn">🆕 Démarrer une nouvelle session (tout effacer)</button>
     <div id="session-status"></div>
@@ -196,25 +202,29 @@ async function fetchAllLabsData() {
 }
 
 function buildParticipants(data, registry) {
+  // Clé de regroupement : l'uid du compte Firebase quand il est disponible
+  // (comptes créés via commencer.html depuis la mise en place de
+  // l'authentification), sinon une clé de secours basée sur le pseudo exact
+  // (compatibilité avec d'anciennes réponses enregistrées avant les comptes).
+  // Grouper par uid élimine l'ancien problème des doublons de pseudo.
   const map = new Map();
   const labs = allLabs();
 
   // D'abord les comptes créés via commencer.html (même sans avoir encore
   // commencé un lab) — pour que le formateur voie qui s'est inscrit.
-  Object.values(registry || {}).forEach((entry) => {
+  Object.entries(registry || {}).forEach(([uid, entry]) => {
     const display = (entry.displayName || "").trim();
     if (!display) return;
-    const norm = display.toLowerCase();
-    if (!map.has(norm)) map.set(norm, { display, perLab: {}, registeredOnly: true });
+    map.set(uid, { display, perLab: {}, registeredOnly: true, uid });
   });
 
   labs.forEach((l) => {
     (data[l.id] || []).forEach((record) => {
       const pseudo = (record.pseudo || "").trim();
       if (!pseudo) return;
-      const norm = pseudo.toLowerCase();
-      if (!map.has(norm)) map.set(norm, { display: pseudo, perLab: {} });
-      const entry = map.get(norm);
+      const key = record.uid || "legacy:" + pseudo.toLowerCase();
+      if (!map.has(key)) map.set(key, { display: pseudo, perLab: {}, uid: record.uid || null });
+      const entry = map.get(key);
       entry.registeredOnly = false;
       const existing = entry.perLab[l.id];
       if (!existing || (record.ts || 0) > (existing.ts || 0)) {
@@ -240,19 +250,31 @@ function renderStats(data, parts) {
   const totalResponses = labs.reduce((s, l) => s + (data[l.id] || []).length, 0);
   const totalParticipants = parts.size;
   let fullyCompleted = 0;
+  let inProgress = 0;
   let registeredOnly = 0;
+  let progressSum = 0; // somme des % de progression individuelle, pour la moyenne
+
   parts.forEach((p) => {
-    if (Object.keys(p.perLab).length === labs.length) fullyCompleted++;
-    if (p.registeredOnly) registeredOnly++;
+    if (p.registeredOnly) { registeredOnly++; return; }
+    const count = Object.keys(p.perLab).length;
+    if (count === labs.length) fullyCompleted++;
+    else if (count > 0) inProgress++;
+    progressSum += (count / labs.length) * 100;
   });
+
   const activeParticipants = totalParticipants - registeredOnly;
-  const completionRate = activeParticipants > 0 ? Math.round((fullyCompleted / activeParticipants) * 100) : 0;
+  // Progression moyenne parmi ceux qui ont commencé au moins un lab — et non
+  // plus un taux binaire "a fini les 21 ou pas", qui affichait 0% tant que
+  // personne n'avait terminé l'intégralité du parcours (même avec plusieurs
+  // labs déjà faits par ailleurs).
+  const avgProgress = activeParticipants > 0 ? Math.round(progressSum / activeParticipants) : 0;
 
   document.getElementById("stat-row").innerHTML = `
     <div class="stat-card accent"><div class="n">${totalParticipants}</div><div class="l">Comptes créés au total${registeredOnly > 0 ? ` (dont ${registeredOnly} n'ont encore fait aucun lab)` : ""}</div></div>
     <div class="stat-card"><div class="n">${totalResponses}</div><div class="l">Réponses enregistrées au total</div></div>
+    <div class="stat-card"><div class="n">${inProgress}</div><div class="l">En cours (1 à ${labs.length - 1} labs)</div></div>
     <div class="stat-card"><div class="n">${fullyCompleted}</div><div class="l">Ont terminé les ${labs.length} labs</div></div>
-    <div class="stat-card"><div class="n">${completionRate}%</div><div class="l">Taux de complétion (parmi ceux ayant commencé)</div></div>
+    <div class="stat-card"><div class="n">${avgProgress}%</div><div class="l">Progression moyenne (parmi ceux ayant commencé)</div></div>
   `;
 }
 
@@ -333,7 +355,9 @@ function searchCertificate() {
   const resultEl = document.getElementById("cert-result");
   if (!pseudo) { resultEl.innerHTML = ""; return; }
   const norm = pseudo.toLowerCase();
-  const p = participants.get(norm);
+  // Les clés de la map sont désormais des uid (ou "legacy:pseudo") et non
+  // plus le pseudo normalisé directement — on cherche par nom affiché.
+  const p = Array.from(participants.values()).find((entry) => entry.display.trim().toLowerCase() === norm);
   const labs = allLabs();
   if (!p) {
     resultEl.innerHTML = `<div class="status-msg err">Aucune réponse trouvée pour « ${LabEngineEscape(pseudo)} ». Vérifiez l'orthographe exacte utilisée par le participant.</div>`;

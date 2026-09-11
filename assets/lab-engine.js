@@ -13,6 +13,7 @@
 
 const LabEngine = (function () {
   let pseudo = "";
+  let currentUser = null; // utilisateur Firebase Authentication connecté (voir assets/candidate-auth.js)
   const PARTICIPANT_NAME_KEY = "participant_name"; // même clé que assets/commencer.html
   let pollTimer = null;
   let currentRecords = []; // dernier jeu de résultats chargé (pour l'export CSV)
@@ -138,6 +139,11 @@ const LabEngine = (function () {
         alert("Ce lab n'est pas encore activé par votre formateur. Revenez-y un peu plus tard.");
         return;
       }
+      // Compte candidat obligatoire désormais (voir assets/candidate-auth.js) :
+      // il n'y a plus d'écran de saisie de pseudo, on démarre directement
+      // avec le nom du compte connecté.
+      startGame();
+      return;
     }
     ["landing", "pseudo", "game", "summary", "dash", "detail"].forEach((v) => {
       const el = document.getElementById("view-" + v);
@@ -152,58 +158,25 @@ const LabEngine = (function () {
       refreshDashboard();
       pollTimer = setInterval(refreshDashboard, 4000);
     }
-    if (view === "pseudo") {
-      const input = document.getElementById("pseudo-input");
-      if (input) {
-        let remembered = null;
-        try {
-          remembered = window.localStorage.getItem(PARTICIPANT_NAME_KEY);
-        } catch (e) {
-          /* localStorage indisponible (navigation privée stricte, etc.) — on continue sans */
-        }
-        if (remembered && !input.value) {
-          input.value = remembered;
-          const btn = document.getElementById("pseudo-btn");
-          if (btn) btn.disabled = false;
-        }
-        showRememberedNameHelper(input, remembered);
-        input.focus();
-        input.select();
-      }
-    }
+    rememberLastView(view);
   }
 
-  // Insère (une seule fois) un petit texte sous le champ pseudo indiquant que
-  // le nom a été retrouvé automatiquement, avec un lien pour le changer si ce
-  // n'est pas la bonne personne sur cet appareil.
-  function showRememberedNameHelper(input, remembered) {
-    let helper = document.getElementById("remembered-name-helper");
-    if (!helper) {
-      helper = document.createElement("div");
-      helper.id = "remembered-name-helper";
-      helper.style.cssText = "margin-top:8px; font-size:12px; color:var(--gray); text-align:left;";
-      input.insertAdjacentElement("afterend", helper);
-    }
-    if (remembered) {
-      helper.style.display = "block";
-      helper.innerHTML = `✓ Vous continuez en tant que <strong>${escapeHtml(remembered)}</strong> — <a href="#" id="clear-remembered-name" style="color:var(--navy); text-decoration:underline;">pas vous ?</a>`;
-      const clearLink = document.getElementById("clear-remembered-name");
-      if (clearLink) {
-        clearLink.onclick = (e) => {
-          e.preventDefault();
-          try {
-            window.localStorage.removeItem(PARTICIPANT_NAME_KEY);
-          } catch (err) {}
-          input.value = "";
-          const btn = document.getElementById("pseudo-btn");
-          if (btn) btn.disabled = true;
-          helper.style.display = "none";
-          input.focus();
-        };
-      }
-    } else {
-      helper.style.display = "none";
-    }
+  // ---------------------------------------------------------------------
+  // Mémorisation du dernier écran affiché (par lab, dans cet onglet) — sert
+  // uniquement à ramener le formateur sur son tableau de bord après un
+  // rafraîchissement de page (F5). Pour les participants, la reprise après
+  // rafraîchissement se fait via findMyExistingRecord() (données Firebase,
+  // donc valable même sur un autre appareil), pas via cette mémorisation
+  // locale — voir resumeLastViewIfPossible().
+  // ---------------------------------------------------------------------
+  function lastViewKey() {
+    return "lab_last_view:" + (window.LAB_ID || "");
+  }
+  function rememberLastView(view) {
+    try { sessionStorage.setItem(lastViewKey(), view); } catch (e) {}
+  }
+  function getLastView() {
+    try { return sessionStorage.getItem(lastViewKey()); } catch (e) { return null; }
   }
 
   async function attemptFormateurAccess() {
@@ -228,7 +201,7 @@ const LabEngine = (function () {
   }
 
   function startGame() {
-    pseudo = document.getElementById("pseudo-input").value.trim() || "Participant";
+    pseudo = (currentUser && (currentUser.displayName || currentUser.email)) || "Participant";
     try {
       window.localStorage.setItem(PARTICIPANT_NAME_KEY, pseudo);
     } catch (e) {
@@ -242,7 +215,7 @@ const LabEngine = (function () {
 
   // Appelé par le script du lab quand le participant a terminé.
   async function submitResult(customFields) {
-    const record = Object.assign({ pseudo, ts: Date.now() }, customFields);
+    const record = Object.assign({ pseudo, uid: currentUser ? currentUser.uid : null, ts: Date.now() }, customFields);
     const container = document.getElementById("summary-container");
     container.innerHTML = "";
     window.LabConfig.renderParticipantSummary(container, record);
@@ -499,27 +472,80 @@ const LabEngine = (function () {
   /* ---------------------------------------------------------------------
    * Démarrage
    * ------------------------------------------------------------------- */
+  // Recherche, dans les résultats déjà enregistrés pour CE lab, celui qui
+  // appartient au compte actuellement connecté (par uid). Contrairement à la
+  // mémorisation de vue (sessionStorage), cette vérification interroge
+  // Firebase : elle fonctionne donc même après un changement d'appareil, pas
+  // seulement après un simple rafraîchissement de page.
+  async function findMyExistingRecord() {
+    if (!currentUser) return null;
+    try {
+      const list = await window.storage.list("resp:", true);
+      const keys = (list && list.keys) || [];
+      let best = null;
+      for (const k of keys) {
+        try {
+          const res = await window.storage.get(k, true);
+          const rec = JSON.parse(res.value);
+          if (rec.uid && rec.uid === currentUser.uid) {
+            if (!best || (rec.ts || 0) > (best.ts || 0)) best = rec;
+          }
+        } catch (e) { /* entrée corrompue, ignorée */ }
+      }
+      return best;
+    } catch (e) {
+      console.error("[lab-engine] Vérification de complétion impossible :", e);
+      return null;
+    }
+  }
+
+  // Corrige le principal irritant d'un rafraîchissement de page (F5) :
+  // - Un participant qui a déjà terminé ce lab (sur cet appareil ou un
+  //   autre) retombe directement sur son résultat, jamais sur l'écran
+  //   d'accueil — et ne peut donc plus soumettre de doublon par erreur.
+  // - Un formateur qui avait ouvert le tableau de bord et rafraîchit la page
+  //   y est ramené directement, sans redemander le mot de passe (déjà validé
+  //   pour cet onglet) ni repasser par l'accueil.
+  // Limite assumée : un lab EN COURS (commencé mais pas encore soumis) ne
+  // peut pas être repris à la carte exacte où le participant s'est arrêté —
+  // chaque lab gère son propre état de jeu en interne, indépendamment du
+  // moteur partagé. Dans ce cas précis, le participant repart de l'accueil.
+  async function resumeLastViewIfPossible() {
+    const existing = await findMyExistingRecord();
+    if (existing) {
+      pseudo = existing.pseudo;
+      const container = document.getElementById("summary-container");
+      container.innerHTML = "";
+      window.LabConfig.renderParticipantSummary(container, existing);
+      goTo("summary");
+      return;
+    }
+    if (getLastView() === "dash" && sessionStorage.getItem("formateur_ok") === "1") {
+      goTo("dash");
+    }
+  }
+
   async function init() {
     if (!window.LabConfig) {
       console.error("[lab-engine] window.LabConfig est introuvable — le lab doit charger son lab-content.js avant lab-engine.js n'appelle init().");
       return;
     }
-    renderLanding();
 
-    const pseudoInput = document.getElementById("pseudo-input");
-    if (pseudoInput) {
-      pseudoInput.addEventListener("input", (e) => {
-        document.getElementById("pseudo-btn").disabled = e.target.value.trim().length === 0;
-      });
-      pseudoInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && e.target.value.trim().length > 0) startGame();
-      });
+    if (window.CandidateAuth) {
+      const user = await window.CandidateAuth.requireAuth();
+      if (!user) return; // redirection vers commencer.html en cours
+      currentUser = user;
+    } else {
+      console.error("[lab-engine] assets/candidate-auth.js est introuvable — l'accès à ce lab n'est plus protégé par un compte candidat.");
     }
+
+    renderLanding();
 
     const handledDetail = await initDetailViewIfNeeded();
     if (handledDetail) return;
 
     startLockPolling();
+    await resumeLastViewIfPossible();
   }
 
   return {

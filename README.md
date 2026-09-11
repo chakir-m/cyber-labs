@@ -25,6 +25,12 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
    - Choisir une région proche (ex. `europe-west1`).
    - Démarrer en **mode test** (on remplacera les règles par défaut à
      l'étape 5 ci-dessous).
+3bis. Dans le menu de gauche : **Build > Authentication** > **Get started** >
+   onglet **Sign-in method** > activer le fournisseur **E-mail/Mot de
+   passe** (première option de la liste) > **Enregistrer**. C'est ce qui
+   permet aux candidats de créer un vrai compte (e-mail + mot de passe) sur
+   `commencer.html` — sans cette étape, l'inscription et la connexion
+   échoueront avec une erreur `auth/operation-not-allowed`.
 4. Cliquer sur l'icône ⚙️ (Paramètres du projet) en haut du menu de gauche >
    **Paramètres du projet** > onglet **Général** > section **Vos
    applications** > cliquer sur l'icône **`</>`** (Web).
@@ -59,10 +65,15 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
        "labs": {
          "$labId": {
            ".read": true,
-           ".write": true,
-           "$category": {
+           "shared": {
+             ".write": "auth != null",
              "$key": {
                ".validate": "newData.hasChildren(['value', 'ts'])"
+             }
+           },
+           "private": {
+             "$deviceOrUid": {
+               ".write": "auth != null"
              }
            }
          }
@@ -75,41 +86,37 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
        },
        "participants": {
          ".read": true,
-         ".write": true
+         "$uid": {
+           ".write": "auth != null && auth.uid === $uid"
+         }
        }
      }
    }
    ```
 
-   > **⚠️ Si vous avez créé votre base Firebase avant l'ajout du verrouillage
-   > des labs (section 3bis)**, vos règles actuelles ne contiennent
-   > probablement que le bloc `"labs"` — le bloc `"course"` ci-dessus est
-   > nécessaire pour que l'activation des labs par le formateur fonctionne.
-   > Sans lui, Firebase refuse silencieusement la lecture/écriture sur ce
-   > chemin (erreur `permission_denied` visible dans la console développeur),
-   > et `labs.html` affiche un bandeau rouge d'avertissement pour vous le
-   > signaler.
+   > **⚠️ Mise à jour des règles (ajout des comptes candidats).** Ces règles
+   > remplacent celles des versions précédentes de ce dépôt : l'écriture des
+   > résultats de labs et de la fiche d'inscription nécessite désormais un
+   > compte candidat connecté (`auth != null`) — un visiteur non connecté ne
+   > peut plus rien écrire, seulement lire les tableaux de bord publics
+   > (`certificat.html` reste utilisable sans exposer les données de qui que
+   > ce soit d'autre). Chacun ne peut écrire que sa **propre** fiche
+   > `participants/{uid}` (`auth.uid === $uid`), pas celle d'un autre
+   > candidat. Si vous avez une base créée avant cette mise à jour, recollez
+   > l'intégralité du bloc ci-dessus dans **Realtime Database > Règles** puis
+   > **Publier** — sans oublier l'étape 3bis ci-dessus (activer le
+   > fournisseur e-mail/mot de passe dans **Authentication**), sans quoi
+   > `auth != null` ne sera jamais vrai et toute écriture échouera.
 
-   > **⚠️ Si vous avez créé votre base Firebase avant l'ajout du système de
-   > compte participant**, vos règles actuelles ne contiennent probablement
-   > pas le bloc `"participants"` ci-dessus — il est nécessaire pour que la
-   > création de compte (`commencer.html`) fonctionne. Sans lui, la création
-   > de compte affichera une erreur de permission.
-
-   > Dans les deux cas, il suffit de recoller les règles complètes ci-dessus
-   > (les trois blocs `"labs"`, `"course"` et `"participants"`) dans
-   > **Realtime Database > Règles** puis de cliquer **Publier** — aucune
-   > autre action nécessaire, l'effet est immédiat.
-
-   > **Note sur la sécurité.** Ces règles sont volontairement ouvertes en
-   > lecture/écriture pour rester simples à utiliser en salle de formation,
-   > sans authentification à gérer par les participants. Les labs ne
-   > demandent jamais d'information réellement identifiante (voir la
-   > conception du Lab 1 : uniquement des types de comptes et des niveaux de
-   > sensibilité, jamais d'identifiants réels). Si vous souhaitez restreindre
-   > davantage l'accès plus tard (éviter qu'un inconnu sur Internet écrive
-   > des données dans votre base), on peut ajouter un code de session ou une
-   > authentification anonyme Firebase — demandez-le et on l'ajoutera.
+   > **Note sur la sécurité.** Le verrouillage des labs (`course/...`) reste
+   > volontairement ouvert en écriture : il n'existe pas de vrai compte
+   > "formateur" côté Firebase (juste un mot de passe partagé côté
+   > `assets/formateur-auth.js`), donc cette porte ne peut pas être
+   > restreinte par les règles elles-mêmes — voir la mise en garde dans ce
+   > fichier. Comme précédemment, les labs ne demandent jamais d'information
+   > réellement identifiante en dehors du nom et de l'e-mail du compte (voir
+   > la conception du Lab 1 : uniquement des types de comptes et des niveaux
+   > de sensibilité).
 
 Cette configuration Firebase est **partagée par tous les labs** du programme :
 vous ne la referez plus jamais, même en ajoutant de nouveaux exercices.
@@ -184,43 +191,71 @@ individuellement au clic, pour ne faire défiler que ce qui vous intéresse.
 
 ---
 
-## 3bis-bis. Créer son compte en amont (`commencer.html`)
+## 3bis-bis. Comptes candidats (`commencer.html`)
 
 Page publique à partager en tout premier (avant même le premier module),
-par exemple via un QR code projeté en salle. Le participant y choisit
-simplement un prénom :
+par exemple via un QR code projeté en salle. Le participant y crée un vrai
+compte : nom, e-mail, mot de passe (Firebase Authentication) — ou se
+connecte s'il en a déjà un.
 
-- Le nom est vérifié en direct dans un petit registre Firebase
-  (`participants/...`) pour éviter que deux personnes utilisent
-  accidentellement le même nom sans le savoir.
-- S'il est déjà pris, le participant peut soit confirmer que c'est bien lui
-  (utile s'il revient sur un nouvel appareil), soit se voir proposer une
-  variante (ex. « Ali 42 »).
-- Une fois validé, le nom est mémorisé sur l'appareil (`localStorage`) :
-  **il n'a plus jamais besoin de le retaper** sur aucun des 21 labs, ni le
-  jour 1 ni le jour 2 — tant qu'il utilise le même téléphone ou ordinateur.
+- Le compte est stocké dans Firebase Authentication (e-mail + mot de passe
+  hashé côté serveur, jamais en clair) et une fiche `participants/{uid}`
+  (nom, e-mail, date de création) est créée pour que le formateur voie qui
+  s'est inscrit, même avant tout lab commencé.
+- Une fois connecté, l'accès est valable sur **tous les labs et pages**
+  (`labs.html`, `mon-parcours.html`, chaque module) et **sur n'importe quel
+  appareil** — contrairement à l'ancienne mémorisation par
+  `localStorage`, un participant qui change de téléphone retrouve sa
+  progression en se reconnectant simplement avec son e-mail.
+- **Aucun lab n'est accessible sans être connecté** : ouvrir directement
+  l'URL d'un lab redirige automatiquement vers `commencer.html`, puis
+  ramène le participant exactement là où il voulait aller une fois connecté.
+- Mot de passe oublié : un lien d'inscription envoie un e-mail de
+  réinitialisation via Firebase (aucune configuration supplémentaire
+  nécessaire, tant que le fournisseur e-mail/mot de passe est activé —
+  voir section 1, étape 3bis).
 
-Le nom saisi sur `commencer.html` utilise la **même mémorisation locale**
-que celle des labs eux-mêmes : un participant qui n'est jamais passé par
-`commencer.html` et tape directement son nom sur un lab continue de
-fonctionner exactement comme avant (rétrocompatible), simplement sans la
-vérification d'unicité en amont.
-
-> ⚠️ Comme pour l'espace formateur, il n'y a pas de mot de passe associé à
-> ce nom — c'est une convenance, pas une sécurité. Le seul but est d'éviter
-> les doublons accidentels et de simplifier la continuité d'un lab à
-> l'autre, pas d'authentifier qui que ce soit.
+> ⚠️ **Limite à connaître** (documentée aussi dans `assets/formateur-auth.js`
+> pour le mode formateur) : ce dépôt reste 100% statique (GitHub Pages), donc
+> la protection des labs est appliquée **côté client** (JavaScript), pas par
+> un vrai serveur — combinée aux règles Firebase de la section 1 (écriture
+> refusée sans compte), c'est une barrière sérieuse pour un usage en
+> formation, mais pas un niveau de sécurité "production" pour des données
+> sensibles.
 
 ---
 
-## 3ter. Espace formateur avancé (`admin.html`)
+## 3ter. Espace candidat (`mon-parcours.html`)
+
+Nouvelle page centrale pour chaque participant, accessible dès qu'il est
+connecté (lien **📈 Mon parcours** en haut de `labs.html`, ou redirection
+automatique après connexion) :
+
+- **Barre de progression globale** (ex. 5/21) et pourcentage.
+- **Prochain lab à faire**, mis en avant avec un bouton direct — le premier
+  lab non terminé et déjà déverrouillé par le formateur, dans l'ordre du
+  programme.
+- **Détail par module** : chaque lab affiché comme Terminé ✓, Disponible
+  (bouton Commencer), ou 🔒 Pas encore activé.
+- **Certificat** : bouton actif uniquement une fois les 21 labs terminés,
+  vers `certificat.html` (qui détecte désormais automatiquement le compte
+  connecté — plus besoin de retaper son pseudo).
+
+---
+
+## 3quater. Espace formateur avancé (`admin.html`)
 
 Accessible depuis `labs.html` via le bouton **📊 Espace formateur avancé**
 (même mot de passe), cette page centralise tout ce qui ne concerne pas
 directement le verrouillage des labs :
 
-- **Vue d'ensemble** : nombre de participants distincts, nombre total de
-  réponses, nombre de personnes ayant terminé l'intégralité du parcours.
+- **Vue d'ensemble** : nombre de comptes créés, nombre total de réponses,
+  nombre de participants **en cours** (1 à 20 labs), nombre ayant **terminé**
+  l'intégralité du parcours, et **progression moyenne** (%) parmi ceux ayant
+  commencé — une moyenne de la progression individuelle de chacun, pas un
+  taux binaire "a tout fini ou pas" (qui affichait 0% tant que personne
+  n'avait terminé les 21 labs, même si plusieurs participants en avaient
+  déjà fait la moitié).
 - **Matrice participant × lab** : un tableau récapitulatif (qui a fait quoi,
   avec le score obtenu), filtrable par pseudo et exportable en CSV — utile
   pour un suivi après-formation sans devoir ouvrir les 21 tableaux de bord
@@ -229,33 +264,41 @@ directement le verrouillage des labs :
   participant sans qu'il ait besoin de le faire lui-même.
 - **Nouvelle session** : voir section suivante.
 
-> ⚠️ **Limite à connaître** : ce dépôt n'a pas de système de compte —
-> l'agrégation « qui a fait quoi » se fait uniquement par correspondance
-> exacte de pseudo (insensible à la casse et aux espaces en trop) entre les
-> labs. Si un participant change de pseudo en cours de route, ses résultats
-> apparaîtront comme deux personnes différentes. Rappelez au groupe
-> d'utiliser **le même pseudo du début à la fin**.
+> ℹ️ **Regroupement par compte, pas par texte.** Depuis l'ajout des comptes
+> candidats, chaque participant est identifié par son compte (uid Firebase),
+> pas par une correspondance de texte sur le pseudo — un participant qui se
+> reconnecte sur un autre appareil, ou dont le nom contient des variations
+> de casse/espaces, reste bien reconnu comme la même personne. D'anciennes
+> réponses enregistrées avant cette mise à jour (sans compte associé) sont
+> encore agrégées par pseudo exact, par rétrocompatibilité.
 
 ### Nouvelle session (remplace l'ancien bouton « Réinitialiser »)
 
 Le bouton **🆕 Démarrer une nouvelle session**, dans la zone rouge en bas de
 `admin.html`, efface **définitivement** les réponses de tous les
-participants sur les 21 labs et reverrouille l'ensemble du parcours — à
-utiliser uniquement entre deux sessions de formation (par exemple avant
-d'accueillir un nouveau groupe), jamais en cours de route. Une double
-confirmation est demandée avant toute suppression.
+participants sur les 21 labs, la fiche de progression de chaque compte, et
+reverrouille l'ensemble du parcours — à utiliser uniquement entre deux
+sessions de formation (par exemple avant d'accueillir un nouveau groupe),
+jamais en cours de route. Une double confirmation est demandée avant toute
+suppression.
 
-L'ancien bouton « Réinitialiser » (qui ne touchait qu'à l'état de
-verrouillage, sans effacer les réponses) a été retiré — cette nouvelle
-option couvre le même besoin tout en évitant l'ambiguïté sur ce qu'elle
-efface réellement.
+> ⚠️ **Limite à connaître.** Ce bouton n'efface que les données de
+> progression dans Realtime Database — il ne supprime **pas** les comptes
+> Firebase Authentication (e-mail + mot de passe) eux-mêmes : les
+> participants d'une session précédente pourront toujours se reconnecter
+> avec leurs identifiants (progression repartie à zéro). Pour supprimer
+> réellement les comptes entre deux groupes, allez dans la console Firebase
+> **Authentication > Users**, sélectionnez les comptes à retirer, puis
+> **Delete account**. Ce n'est pas automatisable depuis une page 100%
+> statique sans clé d'administration côté serveur.
 
 ---
 
-## 3quater. Certificat de réussite (`certificat.html`)
+## 3quinquies. Certificat de réussite (`certificat.html`)
 
-Page publique (aucun mot de passe), à partager avec les participants en fin
-de formation. Chacun y saisit le pseudo exact utilisé pendant les labs :
+Page réservée aux candidats connectés — la progression et le certificat
+sont calculés **automatiquement à partir du compte** (plus besoin de
+ressaisir un pseudo) :
 
 - **Tant que les 21 labs ne sont pas tous complétés**, la page affiche
   uniquement une barre de progression et la liste des labs manquants —
@@ -265,9 +308,36 @@ de formation. Chacun y saisit le pseudo exact utilisé pendant les labs :
   (nom du participant, date de complétion), imprimable ou exportable en PDF
   via le bouton dédié (utilise l'impression du navigateur).
 
-Comme pour l'espace formateur, la correspondance se fait par pseudo exact —
-un participant doit utiliser le même pseudo sur les 21 labs pour que son
-certificat se débloque.
+L'identification se fait par le compte connecté (uid) ; pour d'anciennes
+réponses enregistrées avant les comptes, une correspondance de secours par
+pseudo exact reste appliquée.
+
+---
+
+## 3sexies. Reprise après rafraîchissement de page
+
+Un rafraîchissement (F5, ou rechargement du navigateur) ne renvoie plus
+systématiquement à l'écran d'accueil :
+
+- **Un lab déjà terminé par le compte connecté** réaffiche directement le
+  résultat obtenu, sur n'importe quel appareil (la vérification se fait
+  dans Firebase, pas seulement localement) — cela évite aussi qu'un
+  participant soumette deux fois le même lab par erreur.
+- **Le tableau de bord formateur** (`view-dash`, dans un lab ou sur
+  `admin.html`) reste affiché après un F5 tant que l'accès formateur est
+  encore valide dans l'onglet, au lieu de repasser par l'écran d'accueil.
+- **`labs.html`** retient le mode formateur et les modules dépliés d'un
+  rafraîchissement à l'autre (mémorisation par onglet).
+
+> ⚠️ **Limite assumée.** Un lab **en cours** (commencé mais pas encore
+> soumis) ne peut pas reprendre exactement à la carte/question où le
+> participant s'est arrêté après un F5 : chaque lab gère son propre état de
+> jeu en interne (dans son `lab-content.js` propre), indépendamment du
+> moteur partagé, et cet état n'est pas persistant par conception (pas de
+> sauvegarde intermédiaire). Dans ce cas précis, le participant repart de
+> l'écran d'accueil et relance le lab depuis le début. Si ce cas devient
+> gênant en pratique (labs longs, réseau instable en salle), on peut ajouter
+> une sauvegarde de progression intermédiaire lab par lab — à la demande.
 
 ---
 
@@ -322,18 +392,20 @@ Plusieurs labs utilisent des composants graphiques fournis par `assets/lab-engin
 /
 ├── index.html                          ← page d'accueil PAR DÉFAUT (présentation de la formation 2 jours)
 ├── programme.html                      ← plaquette détaillée du programme (planning J1/J2, tableau des labs)
-├── commencer.html                      ← création de compte participant (à partager en premier)
+├── commencer.html                      ← création de compte / connexion candidat (Firebase Authentication, à partager en premier)
+├── mon-parcours.html                   ← espace candidat : progression, prochain lab, accès certificat à 100%
 ├── labs.html                           ← hub listant tous les labs, classés par module (verrouillage inclus)
 ├── admin.html                          ← espace formateur avancé (vue d'ensemble, export CSV, nouvelle session)
-├── certificat.html                     ← vérification publique + certificat de réussite (participants)
+├── certificat.html                     ← certificat de réussite, calculé automatiquement pour le compte connecté
 ├── assets/
 │   ├── firebase-config.js              ← configuration Firebase (remplie une fois)
+│   ├── candidate-auth.js               ← authentification candidat (inscription/connexion/mot de passe oublié) — Firebase Authentication
 │   ├── lab-storage.js                  ← couche de stockage (remplace window.storage) + file d'attente locale hors-ligne
 │   ├── course-lock.js                  ← verrouillage/déverrouillage des labs par le formateur
-│   ├── modules-data.js                 ← liste centrale des 10 modules/21 labs (utilisée par labs.html, admin.html, certificat.html)
+│   ├── modules-data.js                 ← liste centrale des 10 modules/21 labs (utilisée par labs.html, admin.html, certificat.html, mon-parcours.html)
 │   ├── formateur-auth.js               ← protection par mot de passe du mode formateur
 │   ├── lab-engine.css                  ← styles partagés par tous les labs
-│   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail, jauge SVG...)
+│   ├── lab-engine.js                   ← moteur partagé (landing, dashboard, QR, CSV, détail, jauge SVG, garde d'authentification, reprise après F5...)
 │   ├── lab-template.html               ← gabarit HTML à dupliquer pour un nouveau lab
 │   └── lab-content.template.js         ← gabarit commenté du contenu d'un lab
 ├── module1-traqueur-exposition/
