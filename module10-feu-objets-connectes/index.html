@@ -31,7 +31,7 @@
 <div class="app">
 
   <!-- ===================== LANDING ===================== -->
-  <div id="view-landing">
+  <div id="view-landing" class="hidden">
     <div class="landing-hero">
       <div class="badge-icon"></div>
       <span class="eyebrow" id="landing-tag" style="color:var(--gold)">Lab interactif</span>
@@ -92,7 +92,7 @@
   <div id="view-summary" class="hidden">
     <div class="topbar">
       <div class="brand"><span class="dot"></span><span>Lab</span></div>
-      <button class="link-back" onclick="LabEngine.goTo('landing')">Terminer</button>
+      <button class="link-back" onclick="LabEngine.finishToParcours()">Terminer</button>
     </div>
     <div class="center-wrap">
       <div id="summary-container" style="width:100%; max-width:520px;"></div>

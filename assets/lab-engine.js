@@ -11,6 +11,16 @@
 // attendues et des exemples commentés.
 // ============================================================================
 
+// ============================================================================
+// SÉCURITÉ — la vue #view-landing DOIT rester cachée par défaut dans le HTML
+// (class="hidden", comme les autres vues) : elle n'est révélée qu'après un
+// init() qui a confirmé l'authentification (voir requireAuth ci-dessous).
+// Si elle est visible par défaut dans le HTML, le bouton "Je suis
+// participant" reste cliquable pendant la vérification d'auth (voire si
+// celle-ci échoue silencieusement), ce qui contourne totalement la
+// protection. Ne jamais retirer cette classe "hidden" du template.
+// ============================================================================
+
 const LabEngine = (function () {
   let pseudo = "";
   let currentUser = null; // utilisateur Firebase Authentication connecté (voir assets/candidate-auth.js)
@@ -201,7 +211,16 @@ const LabEngine = (function () {
   }
 
   function startGame() {
-    pseudo = (currentUser && (currentUser.displayName || currentUser.email)) || "Participant";
+    if (!currentUser) {
+      // Filet de sécurité : ceci ne devrait jamais arriver puisque le
+      // bouton n'est cliquable qu'après un init() réussi, mais on bloque
+      // quand même explicitement plutôt que de faire confiance à l'état de
+      // l'interface.
+      console.error("[lab-engine] Tentative de démarrage du jeu sans compte authentifié — blocage.");
+      if (window.CandidateAuth) window.CandidateAuth.requireAuth();
+      return;
+    }
+    pseudo = currentUser.displayName || currentUser.email || "Participant";
     try {
       window.localStorage.setItem(PARTICIPANT_NAME_KEY, pseudo);
     } catch (e) {
@@ -213,9 +232,97 @@ const LabEngine = (function () {
     window.LabConfig.renderGame(container, pseudo);
   }
 
+  // Renvoie vers l'espace candidat plutôt que vers l'écran d'accueil du lab
+  // — une fois un lab terminé, il n'y a plus de raison d'y rester.
+  function finishToParcours() {
+    const href = (window.CandidateAuth && window.CandidateAuth.pathToRoot)
+      ? window.CandidateAuth.pathToRoot("mon-parcours.html")
+      : "../mon-parcours.html";
+    location.href = href;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Autorisations de reprise — un candidat ne peut refaire un lab déjà
+   * terminé que si son formateur le lui a explicitement autorisé (une fois,
+   * ou plusieurs) depuis admin.html. Stocké dans Firebase sous
+   * retakes/{labId}/{uid}/remaining : -1 = illimité, 0/absent = aucune
+   * reprise, N>0 = N reprise(s) restante(s) (décrémentées à la soumission).
+   * ------------------------------------------------------------------- */
+  function getFirebaseDb() {
+    try {
+      return typeof firebase !== "undefined" && firebase.apps.length ? firebase.database() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function getRetakeRemaining(labId, uid) {
+    const db = getFirebaseDb();
+    if (!db) return 0;
+    try {
+      const snap = await db.ref(`retakes/${labId}/${uid}`).get();
+      if (!snap.exists()) return 0;
+      const val = snap.val();
+      return typeof val.remaining === "number" ? val.remaining : 0;
+    } catch (e) {
+      console.error("[lab-engine] Lecture de l'autorisation de reprise impossible :", e);
+      return 0;
+    }
+  }
+
+  async function consumeRetake(labId, uid) {
+    const db = getFirebaseDb();
+    if (!db) return;
+    try {
+      await db.ref(`retakes/${labId}/${uid}/remaining`).transaction((current) => {
+        if (current === -1) return -1; // illimité : jamais décrémenté
+        if (typeof current !== "number" || current <= 0) return 0;
+        return current - 1;
+      });
+    } catch (e) {
+      console.error("[lab-engine] Décrément de l'autorisation de reprise impossible :", e);
+    }
+  }
+
+  // Affiche le résultat déjà enregistré, avec un bandeau explicite selon
+  // qu'une reprise a été autorisée ou non par le formateur.
+  function showAlreadyDoneScreen(existing, remaining) {
+    pseudo = existing.pseudo;
+    const container = document.getElementById("summary-container");
+    container.innerHTML = "";
+
+    const banner = document.createElement("div");
+    banner.style.cssText = "max-width:520px; margin:0 auto 18px; border-radius:14px; padding:16px 20px; font-size:13.5px; line-height:1.6; text-align:left;";
+    const dateStr = new Date(existing.ts || Date.now()).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+    if (remaining !== 0) {
+      const label = remaining === -1
+        ? "reprise(s) illimitée(s)"
+        : remaining + " reprise" + (remaining > 1 ? "s" : "") + " restante" + (remaining > 1 ? "s" : "");
+      banner.style.cssText += "background:#FFF8E8; border:1px dashed #D8B65A; color:#7A5C1E;";
+      banner.innerHTML = `✅ Vous avez déjà terminé ce lab le ${dateStr}. Votre formateur vous a autorisé à le repasser (${label}).
+        <button id="lab-retake-btn" style="display:block; margin-top:10px; background:#1E2761; color:#fff; border:none; border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer; font-size:12.5px;">Repasser le lab →</button>`;
+    } else {
+      banner.style.cssText += "background:#EDEAE0; border:1px dashed #C9C4B4; color:#4A4F63;";
+      banner.innerHTML = `🔒 Vous avez déjà terminé ce lab le ${dateStr}. Pour le repasser, demandez à votre formateur de vous autoriser une reprise depuis l'espace formateur avancé.`;
+    }
+    container.appendChild(banner);
+
+    window.LabConfig.renderParticipantSummary(container, existing);
+    goTo("summary");
+
+    const retakeBtn = document.getElementById("lab-retake-btn");
+    if (retakeBtn) retakeBtn.onclick = () => startGame();
+  }
+
   // Appelé par le script du lab quand le participant a terminé.
   async function submitResult(customFields) {
-    const record = Object.assign({ pseudo, uid: currentUser ? currentUser.uid : null, ts: Date.now() }, customFields);
+    if (!currentUser) {
+      console.error("[lab-engine] Tentative de soumission sans compte authentifié — blocage.");
+      return;
+    }
+    const wasRetake = !!(await findMyExistingRecord());
+    const record = Object.assign({ pseudo, uid: currentUser.uid, ts: Date.now() }, customFields);
     const container = document.getElementById("summary-container");
     container.innerHTML = "";
     window.LabConfig.renderParticipantSummary(container, record);
@@ -232,6 +339,9 @@ const LabEngine = (function () {
         note.textContent =
           "📶 Connexion instable : votre résultat est enregistré sur cet appareil et sera transmis automatiquement au formateur dès que la connexion revient. Rien n'est perdu — pas besoin de recommencer.";
         container.appendChild(note);
+      }
+      if (wasRetake) {
+        await consumeRetake(window.LAB_ID, currentUser.uid);
       }
     } catch (e) {
       console.error("Erreur d'enregistrement", e);
@@ -513,16 +623,18 @@ const LabEngine = (function () {
   async function resumeLastViewIfPossible() {
     const existing = await findMyExistingRecord();
     if (existing) {
-      pseudo = existing.pseudo;
-      const container = document.getElementById("summary-container");
-      container.innerHTML = "";
-      window.LabConfig.renderParticipantSummary(container, existing);
-      goTo("summary");
+      const remaining = await getRetakeRemaining(window.LAB_ID, currentUser.uid);
+      showAlreadyDoneScreen(existing, remaining);
       return;
     }
     if (getLastView() === "dash" && sessionStorage.getItem("formateur_ok") === "1") {
       goTo("dash");
+      return;
     }
+    // Cas normal : rien à reprendre, on affiche explicitement l'accueil (la
+    // vue est cachée par défaut dans le HTML tant que ceci n'a pas été
+    // appelé — voir la remarque de sécurité en tête de fichier).
+    goTo("landing");
   }
 
   // Écran bloquant affiché si l'authentification ne peut pas être vérifiée
@@ -576,7 +688,7 @@ const LabEngine = (function () {
   }
 
   return {
-    init, goTo, startGame, submitResult, attemptFormateurAccess,
+    init, goTo, startGame, submitResult, attemptFormateurAccess, finishToParcours,
     copyShareUrl, exportCsv, resetDatabase, escapeHtml,
     gaugeMarkup, bindGauge,
   };

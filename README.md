@@ -84,6 +84,10 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
            ".write": true
          }
        },
+       "retakes": {
+         ".read": true,
+         ".write": true
+       },
        "participants": {
          ".read": true,
          "$uid": {
@@ -108,15 +112,15 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
    > fournisseur e-mail/mot de passe dans **Authentication**), sans quoi
    > `auth != null` ne sera jamais vrai et toute écriture échouera.
 
-   > **Note sur la sécurité.** Le verrouillage des labs (`course/...`) reste
-   > volontairement ouvert en écriture : il n'existe pas de vrai compte
-   > "formateur" côté Firebase (juste un mot de passe partagé côté
-   > `assets/formateur-auth.js`), donc cette porte ne peut pas être
-   > restreinte par les règles elles-mêmes — voir la mise en garde dans ce
-   > fichier. Comme précédemment, les labs ne demandent jamais d'information
-   > réellement identifiante en dehors du nom et de l'e-mail du compte (voir
-   > la conception du Lab 1 : uniquement des types de comptes et des niveaux
-   > de sensibilité).
+   > **Note sur la sécurité.** Le verrouillage des labs (`course/...`) et les
+   > autorisations de reprise (`retakes/...`) restent volontairement ouverts
+   > en écriture : il n'existe pas de vrai compte "formateur" côté Firebase
+   > (juste un mot de passe partagé côté `assets/formateur-auth.js`), donc
+   > cette porte ne peut pas être restreinte par les règles elles-mêmes —
+   > voir la mise en garde dans ce fichier. Comme précédemment, les labs ne
+   > demandent jamais d'information réellement identifiante en dehors du nom
+   > et de l'e-mail du compte (voir la conception du Lab 1 : uniquement des
+   > types de comptes et des niveaux de sensibilité).
 
 Cette configuration Firebase est **partagée par tous les labs** du programme :
 vous ne la referez plus jamais, même en ajoutant de nouveaux exercices.
@@ -338,6 +342,34 @@ systématiquement à l'écran d'accueil :
 > l'écran d'accueil et relance le lab depuis le début. Si ce cas devient
 > gênant en pratique (labs longs, réseau instable en salle), on peut ajouter
 > une sauvegarde de progression intermédiaire lab par lab — à la demande.
+
+---
+
+## 3septies. Blocage de repassage + autorisation de reprise formateur
+
+Un candidat qui a déjà terminé un lab **ne peut plus le repasser seul** : en
+rouvrant la page (ou en y revenant depuis `mon-parcours.html`), il retombe
+directement sur son résultat, accompagné d'un message :
+
+- **Sans autorisation** : « 🔒 Vous avez déjà terminé ce lab... demandez à
+  votre formateur de vous autoriser une reprise. » — aucun moyen de
+  recommencer par lui-même.
+- **Avec autorisation accordée** : le nombre de reprises restantes est
+  affiché, avec un bouton « Repasser le lab → ».
+
+Le formateur accorde ces autorisations depuis `admin.html`, section
+**Autoriser une reprise de lab** : choisir un participant (uniquement ceux
+ayant un compte, l'autorisation étant liée à un uid) et un lab, puis
+**Autoriser 1 reprise**, **Autoriser sans limite**, ou **Retirer
+l'autorisation**. Une reprise à usage unique est automatiquement
+"consommée" (décrémentée) dès que le candidat soumet son nouveau résultat —
+pas au moment où il clique sur "Repasser", pour ne pas pénaliser un
+abandon en cours de route.
+
+> ℹ️ Techniquement, ceci est stocké dans `retakes/{labId}/{uid}` (voir les
+> règles Firebase, section 1) et remplacé/écrasé par `admin.html` sans
+> historique des autorisations précédentes — seule l'autorisation active
+> compte.
 
 ---
 

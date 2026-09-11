@@ -132,6 +132,28 @@
     <div id="cert-result" style="margin-top:16px;"></div>
   </div>
 
+  <div class="section-title">Autoriser une reprise de lab</div>
+  <div class="panel">
+    <p style="font-size:13px; color:var(--gray); margin-bottom:14px; line-height:1.6;">
+      Un candidat qui a déjà terminé un lab ne peut pas le repasser seul — il voit un message lui demandant de vous
+      contacter. Choisissez un participant et un lab pour lui accorder (ou retirer) une autorisation de reprise.
+    </p>
+    <div class="search-row" style="flex-wrap:wrap;">
+      <select id="retake-participant-select" style="flex:1; min-width:200px; padding:10px 12px; border-radius:8px; border:1.5px solid #DCD7C8; font-family:inherit; font-size:13.5px;">
+        <option value="">Chargement des participants…</option>
+      </select>
+      <select id="retake-lab-select" style="flex:1; min-width:200px; padding:10px 12px; border-radius:8px; border:1.5px solid #DCD7C8; font-family:inherit; font-size:13.5px;">
+        <option value="">Chargement des labs…</option>
+      </select>
+    </div>
+    <div class="search-row" style="margin-bottom:0; margin-top:10px;">
+      <button class="btn-ghost" id="retake-once-btn">Autoriser 1 reprise</button>
+      <button class="btn-ghost" id="retake-unlimited-btn">Autoriser sans limite</button>
+      <button class="btn-ghost" id="retake-revoke-btn" style="color:var(--high); border-color:#EBC9C4;">Retirer l'autorisation</button>
+    </div>
+    <div id="retake-status" style="margin-top:12px;"></div>
+  </div>
+
   <div class="section-title">Nouvelle session</div>
   <div class="danger-zone">
     <h3>⚠️ Effacer toutes les données et repartir à zéro</h3>
@@ -379,6 +401,53 @@ async function loadAndRender() {
   participants = buildParticipants(labsData, registry);
   renderStats(labsData, participants);
   renderMatrix(participants, document.getElementById("search-input").value.trim());
+  populateRetakeSelectors();
+}
+
+/* ---------------------------------------------------------------------
+ * Autorisations de reprise — retakes/{labId}/{uid}/remaining :
+ *   -1 = illimité, 0/absent = aucune reprise, N>0 = N reprise(s) restante(s).
+ * Seuls les participants avec un vrai compte (uid) peuvent être ciblés :
+ * une reprise n'a de sens que pour une identité stable.
+ * ------------------------------------------------------------------- */
+function populateRetakeSelectors() {
+  const participantSelect = document.getElementById("retake-participant-select");
+  const withUid = Array.from(participants.entries()).filter(([key, p]) => !!p.uid);
+  if (withUid.length === 0) {
+    participantSelect.innerHTML = `<option value="">Aucun participant avec compte pour l'instant</option>`;
+  } else {
+    participantSelect.innerHTML = withUid
+      .sort((a, b) => a[1].display.localeCompare(b[1].display))
+      .map(([, p]) => `<option value="${LabEngineEscape(p.uid)}">${LabEngineEscape(p.display)}</option>`)
+      .join("");
+  }
+
+  const labSelect = document.getElementById("retake-lab-select");
+  labSelect.innerHTML = allLabs()
+    .map((l) => `<option value="${l.id}">M${l.moduleNum} — ${LabEngineEscape(l.title)}</option>`)
+    .join("");
+}
+
+async function setRetake(remainingValue) {
+  const uid = document.getElementById("retake-participant-select").value;
+  const labId = document.getElementById("retake-lab-select").value;
+  const statusEl = document.getElementById("retake-status");
+  if (!uid || !labId) {
+    statusEl.innerHTML = `<div class="status-msg err">Choisissez un participant et un lab.</div>`;
+    return;
+  }
+  try {
+    if (remainingValue === null) {
+      await db.ref(`retakes/${labId}/${uid}`).remove();
+    } else {
+      await db.ref(`retakes/${labId}/${uid}`).set({ remaining: remainingValue, grantedAt: Date.now() });
+    }
+    const label = remainingValue === null ? "retirée" : (remainingValue === -1 ? "accordée sans limite" : "accordée (1 reprise)");
+    statusEl.innerHTML = `<div class="status-msg ok">✓ Autorisation ${label}.</div>`;
+  } catch (e) {
+    console.error(e);
+    statusEl.innerHTML = `<div class="status-msg err">⚠️ Impossible de mettre à jour l'autorisation (vérifiez les règles Firebase).</div>`;
+  }
 }
 
 async function startNewSession() {
@@ -397,6 +466,7 @@ async function startNewSession() {
     for (const labId of allLabIds()) {
       await db.ref(`labs/${labId}/shared`).remove();
       await db.ref(`labs/${labId}/private`).remove();
+      await db.ref(`retakes/${labId}`).remove();
     }
     await db.ref("participants").remove();
     await window.CourseLock.resetAll();
@@ -422,6 +492,9 @@ async function boot() {
   document.getElementById("refresh-btn").addEventListener("click", loadAndRender);
   document.getElementById("export-csv-btn").addEventListener("click", exportCsv);
   document.getElementById("cert-search-btn").addEventListener("click", searchCertificate);
+  document.getElementById("retake-once-btn").addEventListener("click", () => setRetake(1));
+  document.getElementById("retake-unlimited-btn").addEventListener("click", () => setRetake(-1));
+  document.getElementById("retake-revoke-btn").addEventListener("click", () => setRetake(null));
   document.getElementById("new-session-btn").addEventListener("click", startNewSession);
 
   await loadAndRender();
