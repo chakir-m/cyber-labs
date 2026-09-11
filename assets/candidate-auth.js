@@ -114,7 +114,13 @@
     return new Promise((resolve) => {
       const unsub = auth.onAuthStateChanged((user) => {
         unsub();
-        if (user) {
+        // Un utilisateur anonyme (utilisé uniquement par admin.html pour ses
+        // propres opérations de maintenance — voir ce fichier) ne compte
+        // jamais comme un candidat authentifié : sans ce filtre, un
+        // formateur ayant ouvert admin.html sur un poste partagé laisserait
+        // ce même navigateur accéder aux labs sans jamais passer par un
+        // vrai compte candidat.
+        if (user && !user.isAnonymous) {
           resolve(user);
           return;
         }

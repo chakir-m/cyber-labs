@@ -177,6 +177,7 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="./assets/firebase-config.js"></script>
 <script src="./assets/course-lock.js"></script>
@@ -185,6 +186,26 @@
 <script>
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
+
+// admin.html n'a pas de vrai compte Firebase "formateur" (juste le mot de
+// passe local de assets/formateur-auth.js) : pour que les suppressions
+// (Nouvelle session) satisfassent les règles Firebase qui exigent
+// "auth != null" sur les données de labs, on ouvre une session Firebase
+// anonyme dès que le mot de passe formateur est validé. Ce compte anonyme
+// n'a aucun droit particulier au-delà de ce que permettent les règles pour
+// "n'importe quel utilisateur connecté" — et candidate-auth.js l'exclut
+// explicitement de l'accès aux labs (voir son commentaire sur isAnonymous).
+async function ensureAnonymousSession() {
+  if (auth.currentUser) return true;
+  try {
+    await auth.signInAnonymously();
+    return true;
+  } catch (e) {
+    console.error("[admin] Connexion anonyme impossible :", e);
+    return false;
+  }
+}
 
 function allLabs() {
   return MODULES_DATA.flatMap((m) => m.labs.map((l) => Object.assign({}, l, { moduleNum: m.num })));
@@ -462,6 +483,12 @@ async function startNewSession() {
   statusEl.innerHTML = `<div class="status-msg ok">Suppression en cours…</div>`;
   const btn = document.getElementById("new-session-btn");
   btn.disabled = true;
+  const anonOk = await ensureAnonymousSession();
+  if (!anonOk) {
+    statusEl.innerHTML = `<div class="status-msg err">⚠️ Impossible d'ouvrir la session technique nécessaire à la suppression. Activez le fournisseur <strong>Anonyme</strong> dans Firebase (Authentication &gt; Sign-in method) puis réessayez.</div>`;
+    btn.disabled = false;
+    return;
+  }
   try {
     for (const labId of allLabIds()) {
       await db.ref(`labs/${labId}/shared`).remove();
@@ -487,6 +514,12 @@ async function boot() {
   }
   document.getElementById("gate-screen").classList.add("hidden");
   document.getElementById("admin-content").classList.remove("hidden");
+
+  const anonOk = await ensureAnonymousSession();
+  if (!anonOk) {
+    document.getElementById("session-status").innerHTML =
+      `<div class="status-msg err">⚠️ La connexion technique de l'espace formateur a échoué — le bouton "Nouvelle session" ne fonctionnera probablement pas tant que le fournisseur <strong>Anonyme</strong> n'est pas activé dans Firebase (Authentication &gt; Sign-in method &gt; Anonymous). Le reste de la page (statistiques, matrice, export CSV) fonctionne normalement.</div>`;
+  }
 
   document.getElementById("search-input").addEventListener("input", (e) => renderMatrix(participants, e.target.value.trim()));
   document.getElementById("refresh-btn").addEventListener("click", loadAndRender);

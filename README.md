@@ -31,6 +31,18 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
    permet aux candidats de créer un vrai compte (e-mail + mot de passe) sur
    `commencer.html` — sans cette étape, l'inscription et la connexion
    échoueront avec une erreur `auth/operation-not-allowed`.
+3ter. Toujours dans **Sign-in method**, activer aussi le fournisseur
+   **Anonyme** (**Anonymous**) > **Enregistrer**. `admin.html` n'a pas de
+   vrai compte Firebase "formateur" (juste le mot de passe local de
+   `assets/formateur-auth.js`) : il ouvre une session anonyme dès que ce mot
+   de passe est validé, uniquement pour que ses actions de maintenance
+   (bouton **Nouvelle session**, notamment) satisfassent les règles
+   ci-dessous qui exigent une connexion Firebase (`auth != null`). Sans
+   cette étape, le bouton **Nouvelle session** échoue avec une erreur de
+   permission — c'est le symptôme le plus visible d'un oubli ici. Une
+   session anonyme n'a aucun droit particulier et n'est jamais confondue
+   avec un compte candidat (voir `assets/candidate-auth.js`, qui l'exclut
+   explicitement de l'accès aux labs).
 4. Cliquer sur l'icône ⚙️ (Paramètres du projet) en haut du menu de gauche >
    **Paramètres du projet** > onglet **Général** > section **Vos
    applications** > cliquer sur l'icône **`</>`** (Web).
@@ -90,9 +102,7 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
        },
        "participants": {
          ".read": true,
-         "$uid": {
-           ".write": "auth != null && auth.uid === $uid"
-         }
+         ".write": "auth != null"
        }
      }
    }
@@ -100,17 +110,21 @@ GitHub Pages ne sert que des fichiers statiques et ne peut pas faire ça seul.
 
    > **⚠️ Mise à jour des règles (ajout des comptes candidats).** Ces règles
    > remplacent celles des versions précédentes de ce dépôt : l'écriture des
-   > résultats de labs et de la fiche d'inscription nécessite désormais un
-   > compte candidat connecté (`auth != null`) — un visiteur non connecté ne
-   > peut plus rien écrire, seulement lire les tableaux de bord publics
-   > (`certificat.html` reste utilisable sans exposer les données de qui que
-   > ce soit d'autre). Chacun ne peut écrire que sa **propre** fiche
-   > `participants/{uid}` (`auth.uid === $uid`), pas celle d'un autre
-   > candidat. Si vous avez une base créée avant cette mise à jour, recollez
-   > l'intégralité du bloc ci-dessus dans **Realtime Database > Règles** puis
-   > **Publier** — sans oublier l'étape 3bis ci-dessus (activer le
-   > fournisseur e-mail/mot de passe dans **Authentication**), sans quoi
-   > `auth != null` ne sera jamais vrai et toute écriture échouera.
+   > résultats de labs nécessite désormais une connexion Firebase
+   > (`auth != null`) — un visiteur totalement anonyme ne peut plus rien
+   > écrire, seulement lire les tableaux de bord publics (`certificat.html`
+   > reste utilisable sans exposer les données de qui que ce soit d'autre).
+   > `participants` (la fiche d'inscription : nom, e-mail) suit la même
+   > règle — volontairement sans restriction par compte au-delà de
+   > `auth != null`, pour que `admin.html` (connecté anonymement, voir
+   > l'étape 3ter) puisse effacer ce registre lors d'une nouvelle session ;
+   > ces données n'étant qu'un nom et un e-mail de formation, ce n'est pas
+   > un compromis dangereux. Si vous avez une base créée avant cette mise à
+   > jour, recollez l'intégralité du bloc ci-dessus dans **Realtime Database
+   > > Règles** puis **Publier** — sans oublier les étapes 3bis et 3ter
+   > ci-dessus (fournisseurs e-mail/mot de passe ET anonyme), sans quoi
+   > `auth != null` ne sera jamais vrai pour personne et toute écriture
+   > échouera, y compris depuis `admin.html`.
 
    > **Note sur la sécurité.** Le verrouillage des labs (`course/...`) et les
    > autorisations de reprise (`retakes/...`) restent volontairement ouverts
