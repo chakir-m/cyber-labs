@@ -525,19 +525,46 @@ const LabEngine = (function () {
     }
   }
 
+  // Écran bloquant affiché si l'authentification ne peut pas être vérifiée
+  // (script bloqué par une extension/un bloqueur, erreur réseau...). Un lab
+  // ne doit JAMAIS rester accessible faute de pouvoir vérifier la connexion
+  // — mieux vaut un blocage explicite qu'un accès silencieusement autorisé.
+  function renderAuthBlockedScreen() {
+    const loginHref = (window.CandidateAuth && window.CandidateAuth.pathToRoot)
+      ? window.CandidateAuth.pathToRoot("commencer.html")
+      : "../commencer.html";
+    document.body.innerHTML = `
+      <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; font-family:'IBM Plex Sans',-apple-system,sans-serif; text-align:center; background:#F5F3EE;">
+        <div style="max-width:440px; background:#fff; border:1.5px solid #E4E0D5; border-radius:16px; padding:34px 30px;">
+          <h2 style="color:#1E2761; font-family:'Fraunces',Georgia,serif; margin-bottom:10px;">Connexion requise</h2>
+          <p style="color:#6B7188; font-size:14px; line-height:1.6; margin-bottom:8px;">Ce lab nécessite un compte candidat, et la vérification de connexion n'a pas pu s'exécuter.</p>
+          <p style="color:#6B7188; font-size:13px; line-height:1.6; margin-bottom:20px;">Si vous êtes déjà connecté(e) et voyez quand même ce message, un bloqueur de script (extension, mode strict de Brave/uBlock, navigation privée stricte...) empêche probablement le chargement de l'authentification Firebase — désactivez-le pour ce site puis rechargez la page.</p>
+          <a href="${loginHref}" style="display:inline-block; background:#1E2761; color:#fff; padding:13px 24px; border-radius:10px; text-decoration:none; font-weight:600; font-size:14px;">Aller à la page de connexion →</a>
+        </div>
+      </div>`;
+  }
+
   async function init() {
     if (!window.LabConfig) {
       console.error("[lab-engine] window.LabConfig est introuvable — le lab doit charger son lab-content.js avant lab-engine.js n'appelle init().");
       return;
     }
 
-    if (window.CandidateAuth) {
-      const user = await window.CandidateAuth.requireAuth();
-      if (!user) return; // redirection vers commencer.html en cours
-      currentUser = user;
-    } else {
-      console.error("[lab-engine] assets/candidate-auth.js est introuvable — l'accès à ce lab n'est plus protégé par un compte candidat.");
+    if (!window.CandidateAuth) {
+      console.error("[lab-engine] assets/candidate-auth.js est introuvable ou n'a pas pu s'initialiser — accès bloqué par précaution (voir renderAuthBlockedScreen).");
+      renderAuthBlockedScreen();
+      return;
     }
+    let user;
+    try {
+      user = await window.CandidateAuth.requireAuth();
+    } catch (e) {
+      console.error("[lab-engine] Erreur lors de la vérification d'authentification — accès bloqué par précaution :", e);
+      renderAuthBlockedScreen();
+      return;
+    }
+    if (!user) return; // redirection vers commencer.html en cours
+    currentUser = user;
 
     renderLanding();
 
